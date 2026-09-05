@@ -1,0 +1,11 @@
+# Pin loosely — DSPy and Langfuse both move fast. Re-check against
+# https://pypi.org/project/dspy/ and https://pypi.org/project/langfuse/
+# before trusting this long-term (same caveat build.sbt gives for Kyo).
+dspy>=3.3,<4
+
+# Optional tracing (see compile_recommendation_prompt.py's
+# _init_langfuse_tracing) — both installed unconditionally since the
+# tracing itself is opt-in at runtime via MAROLA_LANGFUSE_PUBLIC_KEY,
+# not at install time.
+langfuse>=4,<5
+openinference-instrumentation-dspy
