@@ -1,4 +1,6 @@
 # marola-sea-publish — build and publish the marola-sea model to Hugging Face. MIP-0025.
+# Manual dispatch only, on the self-hosted `marola-sea` runner; setup in docs/RUN-LOCALLY.md.
+# CUDA torch comes from a venv (scripts/setup-ml-venv.sh), not nixpkgs — no cache for this pin.
 name: marola-sea publish
 
 on:
@@ -24,6 +26,8 @@ concurrency:
 env:
   # Outside the workspace on purpose — see the checkout step.
   CKPT_ROOT: ${{ github.workspace }}/../marola-checkpoints
+  # Same reasoning: built once, reused by every later run.
+  VENV_ROOT: ${{ github.workspace }}/../marola-ml-venv
 
 jobs:
   publish:
@@ -54,8 +58,12 @@ jobs:
           PRESET: ${{ inputs.preset }}
         run: |
           set -euo pipefail
-          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" --command \
-            python3 finetune/preflight.py --preset "$PRESET" --strict
+          python3 finetune/preflight.py --preset "$PRESET" --strict
+
+      - name: python env with CUDA torch (venv, reused between runs)
+        run: |
+          set -euo pipefail
+          scripts/setup-ml-venv.sh
 
       - name: work out the next version (auto-increment, no input)
         id: version
@@ -73,35 +81,32 @@ jobs:
           python3 finetune/build_dataset.py
           python3 finetune/build_dpo_dataset.py
 
-      - name: confirm the GPU is visible to torch before spending hours on CPU
-        run: |
-          set -euo pipefail
-          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" --command \
-            python3 -c 'import torch; assert torch.cuda.is_available(), \
-              "no CUDA device visible to torch — refusing to fall back to CPU silently"; \
-              print("cuda:", torch.cuda.get_device_name(0))'
-
       - name: train the SFT adapter, then DPO on top of it
         env:
           PRESET: ${{ inputs.preset }}
           RESUME: ${{ inputs.resume && '--resume' || '' }}
           CKPT_ROOT: ${{ env.CKPT_ROOT }}
+          VENV_ROOT: ${{ env.VENV_ROOT }}
         run: |
           set -euo pipefail
-          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" --command sh -c "
-            python3 finetune/train_lora.py --preset '$PRESET' --epochs 3 $RESUME \
-              --out '$CKPT_ROOT/$PRESET/adapter'
-            python3 finetune/train_dpo.py --preset '$PRESET' --epochs 1 $RESUME \
-              --sft-adapter '$CKPT_ROOT/$PRESET/adapter' \
-              --out '$CKPT_ROOT/$PRESET/dpo-adapter'
-          "
+          py="$VENV_ROOT/bin/python"
+          # Refuse rather than fall back to CPU: a silent fallback is hours wasted, not a warning.
+          "$py" -c 'import torch, sys; sys.exit(0 if torch.cuda.is_available() else "no CUDA device visible to torch")'
+          # shellcheck disable=SC2086  # RESUME is intentionally an unquoted flag-or-empty
+          "$py" finetune/train_lora.py --preset "$PRESET" --epochs 3 $RESUME \
+            --out "$CKPT_ROOT/$PRESET/adapter"
+          # shellcheck disable=SC2086
+          "$py" finetune/train_dpo.py --preset "$PRESET" --epochs 1 $RESUME \
+            --sft-adapter "$CKPT_ROOT/$PRESET/adapter" \
+            --out "$CKPT_ROOT/$PRESET/dpo-adapter"
 
       - name: merge the adapter into the base and export GGUFs
         run: |
           set -euo pipefail
           src="$(nix build --no-link --print-out-paths nixpkgs#llama-cpp.src)"
-          nix shell --impure --expr "$(cat .github/nix-ml-env.nix)" nixpkgs#llama-cpp --command \
-            python3 finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
+          "$VENV_ROOT/bin/python" -m pip install --quiet gguf
+          nix shell nixpkgs#llama-cpp --command \
+            "$VENV_ROOT/bin/python" finetune/merge_export.py --preset "${{ inputs.preset }}" --llama-cpp "$src" \
               --adapter "${CKPT_ROOT}/${{ inputs.preset }}/dpo-adapter"
 
       - name: publish to Hugging Face
@@ -112,8 +117,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE_MODEL="$(python3 -c "import sys; sys.path.insert(0,'finetune'); from train_lora import PRESETS; print(PRESETS['$PRESET']['hf'])")"
-          nix shell nixpkgs#python3Packages.huggingface-hub --command \
-            python3 finetune/publish_hf.py \
+          "$VENV_ROOT/bin/python" finetune/publish_hf.py \
             --repo "${GITHUB_REPOSITORY_OWNER}/marola-sea-${PRESET#qwen-}-GGUF" \
             --gguf "finetune/out/marola-sea-${PRESET}-Q4_K_M.gguf" \
             --gguf "finetune/out/marola-sea-${PRESET}-Q8_0.gguf" \
