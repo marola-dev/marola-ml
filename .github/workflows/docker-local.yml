@@ -1,6 +1,8 @@
 name: marola-local (the fine-tuned model as an image, gated by the benchmark)
 
-# MIP-0008 §5.3 — LLMOps in the small: the model is versioned like the code.
+# MIP-0008 §5.3 — LLMOps in the small: the model is versioned like the code. MIP-0070 §5.4: the
+# benchmark is the pinned app image's `--benchmark` (marola-image), never an app build here, and the
+# gate checks the run against the question set in the pinned resources tarball (resources.version).
 
 on:
   push:
@@ -8,9 +10,11 @@ on:
     paths:
       - "finetune/Modelfile"
       - "Dockerfile.local"
-      - "corpus.version"
-      - "core/src/main/resources/**"
-      - "cli/src/main/resources/benchmark_questions.json"
+      - "marola-image"
+      - "resources.version"
+      - "scripts/app-image.sh"
+      - "scripts/benchmark.sh"
+      - "scripts/resources-fetch.sh"
       - "scripts/benchmark_gate.py"
       - "docs/benchmarks/**"
       - ".github/workflows/docker-local.yml"
@@ -30,7 +34,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/marola
+  IMAGE: ghcr.io/${{ github.repository_owner }}/marola-ml
 
 jobs:
   build-gate-promote:
@@ -43,6 +47,8 @@ jobs:
           dockerfile: Dockerfile.local
 
       - uses: docker/setup-buildx-action@v4
+      # Also pulls the app image: ghcr.io/marola-dev/marola is a private package, so it has to grant
+      # this repo read access (package settings, "Manage Actions access") for GITHUB_TOKEN.
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -70,31 +76,31 @@ jobs:
         run: |
           docker run -d --name ollama-local -p 11434:11434 "$IMAGE:local-${GITHUB_SHA::7}"
           for _ in $(seq 1 60); do curl -sf http://localhost:11434/api/tags >/dev/null && break; sleep 2; done
-          curl -s http://localhost:11434/api/tags | grep -q marola-llama3.2
+          tags="$(curl -s http://localhost:11434/api/tags)"
+          grep -q marola-llama3.2 <<<"$tags" && grep -q nomic-embed-text <<<"$tags"
 
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-      - uses: actions/cache@v6
-        with:
-          path: |
-            ~/.cache/coursier
-            ~/.sbt
-            ~/.ivy2/cache
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/**') }}
-          restore-keys: |
-            ${{ runner.os }}-sbt-
-      - uses: sbt/setup-sbt@v1
-
-      # The same `just benchmark`, with the candidate's model; the embedder is the stock llama3.2
-      # the image also carries (OllamaEmbedder's default).
-      - run: scripts/corpus-fetch.sh
-      - name: just benchmark against the candidate
+      - name: The pinned app image (marola-image)
+        id: app
+        run: echo "ref=$(scripts/app-image.sh)" >>"$GITHUB_OUTPUT"
+      - name: Pull it
         env:
-          MAROLA_LOCAL_LLM_MODEL: marola-llama3.2
-          MAROLA_KNOWLEDGE_DIR: .tmp/knowledge
-        run: sbt "cli/run -- --benchmark"
+          APP_IMAGE: ${{ steps.app.outputs.ref }}
+        run: |
+          for attempt in 1 2; do
+            if docker pull -q "$APP_IMAGE"; then exit 0; fi
+            echo "docker pull attempt $attempt failed"
+            [ "$attempt" -eq 2 ] || sleep 60
+          done
+          exit 1
+      - name: The pinned resources tarball (resources.version), for the gate's question set
+        run: scripts/resources-fetch.sh
+
+      # The image answers from its own /app/knowledge and embeds with the nomic-embed-text the
+      # candidate carries; benchmark.sh fails here when the app reports a failure or saves no report.
+      - name: --benchmark, the pinned app image against the candidate
+        env:
+          MAROLA_APP_IMAGE: ${{ steps.app.outputs.ref }}
+        run: scripts/benchmark.sh
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -102,8 +108,12 @@ jobs:
           name: benchmark-${{ github.run_id }}
           path: data/benchmark-*.md
 
-      - name: Gate — compare with docs/benchmarks/
-        run: python3 scripts/benchmark_gate.py check --new data --kept docs/benchmarks --tolerance "${{ inputs.tolerance || '0.05' }}"
+      - name: Gate — compare with docs/benchmarks/, on the pinned question set
+        env:
+          TOLERANCE: ${{ inputs.tolerance || '0.05' }}
+        run: |
+          python3 scripts/benchmark_gate.py check --new data --kept docs/benchmarks \
+            --questions .tmp/resources/benchmark_questions.json --tolerance "$TOLERANCE"
 
       - name: Promote — move :local to this build
         run: |

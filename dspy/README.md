@@ -10,13 +10,13 @@ call, with no Python in the runtime path:
 - `core/src/main/resources/review_prompt.json`: the reviewer/critic pass that grades the
   summarizer's own output and can replace it (`marola.llm.Reviewer`).
 
-See [`../docs/2-Building-marola/ARCHITECTURE.md`](../docs/2-Building-marola/ARCHITECTURE.md) §5a for why this exists and
+See [`marola's docs/2-Building-marola/ARCHITECTURE.md`](https://github.com/marola-dev/marola/blob/main/docs/2-Building-marola/ARCHITECTURE.md) §5a for why this exists and
 [`compile_recommendation_prompt.py`](./compile_recommendation_prompt.py) for the actual program
 (both `dspy.Signature`s, both trainsets, both compile calls); this file is just the "how to run
 it" instructions.
 
 DSPy is Python-only ("**D**eclarative **S**elf-improving **Py**thon"; no JVM port exists; see
-[`FUTURE-WORK.md`](../docs/4-Research-and-plans/FUTURE-WORK.md) §10 for the Scala-ecosystem gap this leaves and the
+[`FUTURE-WORK.md`](https://github.com/marola-dev/marola/blob/main/docs/4-Research-and-plans/FUTURE-WORK.md) §10 for the Scala-ecosystem gap this leaves and the
 proposed `ds4s` port), and its optimizer is a compile-time step, not a runtime dependency, so it
 doesn't need to run in the deployed service.
 
@@ -53,10 +53,11 @@ python compile_recommendation_prompt.py   # defaults to openai/gpt-4o-mini
 
 This writes both `recommendation_prompt.json` and `review_prompt.json` in one run. Re-run it
 whenever `TRAINSET`/`REVIEW_TRAINSET` grow (these double as hand-labeled eval sets; see
-`../docs/4-Research-and-plans/FUTURE-WORK.md` §4.1 for the gap between "doubles as an eval set" and an actual held-out
+`marola's docs/4-Research-and-plans/FUTURE-WORK.md` §4.1 for the gap between "doubles as an eval set" and an actual held-out
 `dspy.Evaluate` loop, which doesn't exist yet) or the target model changes. There's no watch mode,
-it's a manual step you re-run and commit both resulting JSON files, same as any other compiled
-artifact.
+it's a manual step. A local run writes both files to `.tmp/compiled/`; the `compile prompt`
+workflow (`compile-prompt.yml`, dispatch only, a local Ollama model, so free) compiles and opens a
+PR that commits both into the app's `core/src/main/resources/` (MIP-0070 §5.4).
 
 ## Optional: tracing the compile run with Langfuse
 
@@ -87,7 +88,7 @@ root `.env.example`) rather than Langfuse's own bare `LANGFUSE_*` names directly
 ## Optional: logging compile runs to MLflow
 
 Additive to the Langfuse tracing above: both can run at the same time
-([MIP-0010](../docs/MIPs/MIP-0010-mlflow-experiment-tracking.md) §11 OQ4). Where Langfuse traces
+([MIP-0010](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0010-mlflow-experiment-tracking.md) §11 OQ4). Where Langfuse traces
 every individual LLM call made while compiling, this logs one **MLflow run per
 `dspy.teleprompt.Teleprompter.compile()` call** (two per script invocation: "summarize" and
 "review") to the `marola/prompt-compile` experiment: params (`model`, `optimizer`,
@@ -140,7 +141,7 @@ needed once per shell before running `python compile_recommendation_prompt.py`, 
 `ImportError: libstdc++.so.6: cannot open shared object file`.
 
 The Scala-side loader (`marola.llm.CompiledPrompt`, `marola.llm.Reviewer`) exists and was run live
-against both compiled artifacts (`just run -- --summarize`); see `../docs/2-Building-marola/ARCHITECTURE.md` §5a's
+against both compiled artifacts (`just run -- --summarize`); see `marola's docs/2-Building-marola/ARCHITECTURE.md` §5a's
 own Status notes for the full detail, including one case where the reviewer correctly caught a
 deliberately-planted flaw in a draft summary.
 

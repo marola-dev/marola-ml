@@ -1,6 +1,8 @@
 # marola-sea-publish — build and publish the marola-sea model to Hugging Face. MIP-0025.
-# Manual dispatch only, on the self-hosted `marola-sea` runner; setup in docs/1-Using-marola/RUN-LOCALLY.md.
-# CUDA torch comes from a venv (labs/cuda's setup-ml-venv, via flake.nix), not nixpkgs.
+# Manual dispatch only, on the self-hosted `marola-sea` runner. It waits on two things, each
+# tracked in its own marola-ml issue: the HF_TOKEN secret; the marola-sea runners registered at
+# org level for this repo. CUDA torch comes from a venv (labs/cuda's setup-ml-venv, via flake.nix),
+# not nixpkgs.
 name: marola-sea publish
 
 on:
@@ -106,8 +108,10 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=marola-sea-$version" >> "$GITHUB_OUTPUT"
 
-      # build_dataset.py's Layer 1 and ask_ocean_question examples come from the pinned corpus.
+      # build_dataset.py's Layer 1 and ask_ocean_question examples come from the pinned corpus, its
+      # demos and sea lore from the pinned resources tarball.
       - run: scripts/corpus-fetch.sh
+      - run: scripts/resources-fetch.sh
       - name: build the dataset (stdlib only, deterministic)
         run: |
           set -euo pipefail

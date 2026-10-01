@@ -12,9 +12,8 @@ decision, never more, never fabricated when there isn't one.
 Run:  python build_dpo_dataset.py             (or `just finetune-dpo-dataset`)
 Self-test:  python build_dpo_dataset.py --self-test   (or `just quality-other`)
 
-`--resources DIR` overrides where review_prompt.json is read from — the same app -> ml contract
-as build_dataset.py's own flag (MIP-0070 §5.4): once marola-ml is a separate repo, it points at
-the unpacked resources tarball ci.yml publishes, not `../core`.
+review_prompt.json comes from the app's resources tarball (MIP-0070 §5.4), unpacked into
+`.tmp/resources` by `just resources-fetch`; `--resources DIR` overrides it, as in build_dataset.py.
 """
 
 from __future__ import annotations
@@ -148,7 +147,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--resources",
         type=Path,
         default=RESOURCES,
-        help="dir with review_prompt.json (default: core/src/main/resources)",
+        help="dir with review_prompt.json (default: .tmp/resources, from `just resources-fetch`)",
     )
     ap.add_argument("--self-test", action="store_true")
     return ap.parse_args(argv)

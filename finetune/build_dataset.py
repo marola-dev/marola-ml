@@ -19,11 +19,11 @@ Output: finetune/data/train.jsonl and eval.jsonl in the chat format most trainer
 Run:  python build_dataset.py            (or `just finetune-dataset`)
 Self-test:  python build_dataset.py --self-test   (or `just quality-other`)
 
-`--resources DIR` / `--knowledge DIR` override where 1-3 and 4-5 above are read from — the app ->
-ml contract (MIP-0070 §5.4): once marola-ml is a separate repo, `--resources` points at the
-unpacked resources tarball ci.yml publishes, not `../core`. `--knowledge` defaults to
-$MAROLA_KNOWLEDGE_DIR if set, else this repo's `.tmp/knowledge` from `just corpus-fetch` (anchored
-like `--resources`, not the cwd — this file is documented to run from `finetune/`).
+1-3 come from the app's resources tarball (MIP-0070 §5.4), unpacked into `.tmp/resources` by
+`just resources-fetch`; 4-5 from the marola-corpus release `just corpus-fetch` unpacks into
+`.tmp/knowledge` (or $MAROLA_KNOWLEDGE_DIR). `--resources DIR` / `--knowledge DIR` override them;
+both defaults are anchored at the repo root, not the cwd (this file is documented to run from
+`finetune/`).
 """
 
 from __future__ import annotations
@@ -33,12 +33,12 @@ import json
 import os
 import random
 import re
-import subprocess
 import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-RESOURCES = REPO / "core" / "src" / "main" / "resources"
+RESOURCES = REPO / ".tmp" / "resources"
+RESOURCE_FILES = ("recommendation_prompt.json", "review_prompt.json", "sea_lore.json")
 OUT = Path(__file__).resolve().parent / "data"
 
 
@@ -345,7 +345,9 @@ def from_tool_calls(knowledge_dir: Path, sea_lore_path: Path) -> list[dict]:
     return rows
 
 
-def _self_test(knowledge: Path) -> None:
+def _self_test(knowledge: Path, resources: Path) -> None:
+    missing = [f for f in RESOURCE_FILES if not (resources / f).is_file()]
+    assert not missing, f"{missing} not under {resources} — run `just resources-fetch`"
     # A missing or empty corpus must stop main() before it writes a dataset without Layer 1.
     global OUT
     real_out = OUT
@@ -354,12 +356,19 @@ def _self_test(knowledge: Path) -> None:
         (Path(tmp) / "empty").mkdir()
         for bad in (Path(tmp) / "missing", Path(tmp) / "empty"):
             try:
-                main(RESOURCES, bad)
+                main(resources, bad)
             except SystemExit as e:
                 assert e.code not in (None, 0), f"main() exited 0 on corpus {bad}"
             else:
                 raise AssertionError(f"main() built a dataset from corpus {bad}")
         assert not OUT.exists(), "main() wrote a dataset before checking the corpus"
+        try:
+            main(Path(tmp) / "empty", knowledge)
+        except SystemExit as e:
+            assert e.code not in (None, 0), "main() exited 0 with no resources"
+        else:
+            raise AssertionError("main() built a dataset with no resources")
+        assert not OUT.exists(), "main() wrote a dataset before checking the resources"
     OUT = real_out
 
     rows = from_knowledge(knowledge)
@@ -380,29 +389,11 @@ def _self_test(knowledge: Path) -> None:
             f"{fact[:80]!r}"
         )
 
-    # The real app -> ml contract artifact (scripts/build-resources-tarball.sh), unpacked into a
-    # dir with no core/ sibling at all: proves --resources isn't secretly hardcoded to
-    # REPO/core/src/main/resources, and exercises the real sea_lore.json branch of
-    # _ask_tool_examples (MIP-0070 §5.4, task 3's own acceptance check).
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_path = Path(tmp)
-        tar_path = tmp_path / "resources.tar.gz"
-        subprocess.run(
-            [str(REPO / "scripts" / "build-resources-tarball.sh"), str(tar_path)],
-            cwd=REPO,
-            check=True,
-            capture_output=True,
-        )
-        unpacked = tmp_path / "unpacked"
-        unpacked.mkdir()
-        subprocess.run(["tar", "-xzf", str(tar_path), "-C", str(unpacked)], check=True)
-        sea_lore_path = unpacked / "sea_lore.json"
-        assert sea_lore_path.exists(), (
-            "build-resources-tarball.sh's output isn't flat at its root — "
-            "build_dataset.py --resources can't read it (MIP-0070 §5.4)"
-        )
-        no_lore_count = len(from_tool_calls(knowledge, tmp_path / "does-not-exist.json"))
-        tool_rows = from_tool_calls(knowledge, sea_lore_path)
+    # The real resources tarball, unpacked: exercises the real sea_lore.json branch of
+    # _ask_tool_examples (MIP-0070 §5.4).
+    sea_lore_path = resources / "sea_lore.json"
+    no_lore_count = len(from_tool_calls(knowledge, resources / "does-not-exist.json"))
+    tool_rows = from_tool_calls(knowledge, sea_lore_path)
     assert len(tool_rows) > no_lore_count, (
         f"the real sea_lore.json added no tool-call examples: {no_lore_count} without it, "
         f"{len(tool_rows)} with it"
@@ -437,6 +428,12 @@ def _self_test(knowledge: Path) -> None:
 
 
 def main(resources: Path, knowledge: Path) -> None:
+    missing = [f for f in RESOURCE_FILES if not (resources / f).is_file()]
+    if missing:
+        raise SystemExit(
+            f"build_dataset: {', '.join(missing)} missing under {resources} — run "
+            "`just resources-fetch`, or point --resources at an unpacked resources tarball"
+        )
     # from_knowledge() yields nothing for a missing dir: fail rather than train without Layer 1.
     if not knowledge.is_dir() or not any(knowledge.rglob("*.md")):
         raise SystemExit(
@@ -473,7 +470,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=RESOURCES,
         help="dir with recommendation_prompt.json / review_prompt.json / sea_lore.json "
-        "(default: core/src/main/resources)",
+        "(default: .tmp/resources, from `just resources-fetch`)",
     )
     ap.add_argument(
         "--knowledge",
@@ -489,6 +486,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
     if args.self_test:
-        _self_test(args.knowledge)
+        _self_test(args.knowledge, args.resources)
     else:
         main(args.resources, args.knowledge)

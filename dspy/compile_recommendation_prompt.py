@@ -357,10 +357,9 @@ def main() -> int:
     )
     ap.add_argument(
         "--out",
-        default=os.path.join(os.path.dirname(__file__), "..", "core", "src", "main", "resources"),
+        default=os.path.join(os.path.dirname(__file__), "..", ".tmp", "compiled"),
         help="dir to write recommendation_prompt.json / review_prompt.json into (default: "
-        "core/src/main/resources, so a local run behaves as before) — MIP-0070 §5.4 stops DSPy "
-        "writing across the tree; a bot PR commits the compiled files into the app repo instead",
+        ".tmp/compiled). They reach the app as a PR (compile-prompt.yml, MIP-0070 §5.4)",
     )
     args = ap.parse_args()
     if args.self_test:

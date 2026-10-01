@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """benchmark_gate — the promotion gate for the marola-local image (MIP-0008 §5.3, tasks decision 9).
 
-    scripts/benchmark_gate.py check --new data --kept docs/benchmarks [--tolerance 0.05]
+    scripts/benchmark_gate.py check --new data --kept docs/benchmarks [--tolerance 0.05] \
+        [--questions .tmp/resources/benchmark_questions.json]
     scripts/benchmark_gate.py --self-test
 
 `just benchmark` writes a Markdown report whose first table is the summary — one row per arm
@@ -10,10 +11,13 @@ docs/benchmarks/ have the same table, several per file. The gate reads one numbe
 `rag-general` coverage (all), "the result that matters" in docs/benchmarks/2026-09-05.md.
 It fails when the new run's number is more than `--tolerance` below the best kept one, or
 below the new run's own `baseline` — marola must still beat the plain prompt. `--new`/`--kept`
-accept a file or a directory (newest file by name). Standard library only.
+accept a file or a directory (newest file by name). `--questions` is the app's question set from the
+resources tarball (MIP-0070 §5.4): the new run must have answered exactly those ids on every arm, so
+an image and a resources pin that drifted apart fail here. Standard library only.
 """
 
 import argparse
+import json
 import re
 import sys
 import tempfile
@@ -23,6 +27,8 @@ HEADER = re.compile(r"^\|\s*arm\s*\|\s*coverage \(in-corpus\)\s*\|")
 ROW = re.compile(r"^\|\s*([a-z-]+)\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|")
 METRIC_ARM = "rag-general"
 PLAIN_ARM = "baseline"
+ARMS = ("baseline", "rag-strict", "rag-general")
+PER_QUESTION_HEADER = re.compile(r"^\|\s*id\s*\|\s*topic\s*\|")
 
 
 def parse_tables(markdown: str) -> list[dict[str, dict[str, float]]]:
@@ -79,6 +85,10 @@ def check(new_md: str, kept_md: str, tolerance: float) -> tuple[bool, list[str]]
     if got < kept_best - tolerance:
         ok = False
         lines.append(f"FAIL: {got:.2f} is more than {tolerance:.2f} below the kept {kept_best:.2f}")
+        lines.append(
+            "  after a deliberate model or embedder change: commit this run's report as "
+            "docs/benchmarks/<date>.md (it becomes the newest kept run), see docs/index.md"
+        )
     lines.append(f"{PLAIN_ARM} coverage (all) in the new run: {plain:.2f}")
     if got < plain:
         ok = False
@@ -87,6 +97,29 @@ def check(new_md: str, kept_md: str, tolerance: float) -> tuple[bool, list[str]]
         )
     lines.append("PASS" if ok else "the model is not promoted")
     return ok, lines
+
+
+def question_problems(new_md: str, questions: list[dict]) -> list[str]:
+    """What the new run's per-question table lacks, or has extra, against the question set."""
+    if not questions:
+        return ["the question set is empty"]
+    seen: set[tuple[str, str]] = set()
+    in_table = False
+    for line in new_md.splitlines():
+        if PER_QUESTION_HEADER.match(line):
+            in_table = True
+        elif in_table and line.startswith("|") and not line.startswith("|---"):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) >= 4:
+                seen.add((cells[0], cells[3]))
+        elif in_table and not line.startswith("|"):
+            in_table = False
+    if not seen:
+        return ["no per-question table in the new benchmark"]
+    want = {(q["id"], arm) for q in questions for arm in ARMS}
+    problems = [f"missing: {qid} on {arm}" for qid, arm in sorted(want - seen)]
+    problems += [f"not in the question set: {qid} on {arm}" for qid, arm in sorted(seen - want)]
+    return problems
 
 
 def self_test() -> int:
@@ -103,6 +136,7 @@ def self_test() -> int:
     assert ok, out
     ok, out = check(good.replace("| 0.83 |", "| 0.70 |"), kept, 0.05)
     assert not ok and any("below the kept" in line for line in out), out
+    assert any("docs/benchmarks/" in line for line in out), "the failure names no way forward"
     ok, out = check(
         good.replace("| 0.73 |", "| 0.90 |").replace("| 0.83 |", "| 0.80 |"), kept, 0.05
     )
@@ -114,6 +148,26 @@ def self_test() -> int:
         (d / "benchmark-20260901-0000.md").write_text(good.replace("| 0.83 |", "| 0.10 |"))
         (d / "benchmark-20260905-0950.md").write_text(good)
         assert newest(d).name == "benchmark-20260905-0950.md"
+
+    questions = [{"id": "q01"}, {"id": "q02"}]
+    per_q = "\n## Per question\n\n| id | topic | in corpus | arm | coverage | cited | abstained | ms | answer (first 140 chars) |\n|---|---|---|---|---|---|---|---|---|\n"
+    full = (
+        good
+        + per_q
+        + "".join(
+            f"| {q['id']} | safety | yes | {arm} | 1.00 | | | 1 | a |\n"
+            for q in questions
+            for arm in ARMS
+        )
+    )
+    assert question_problems(full, questions) == [], question_problems(full, questions)
+    partial = full.replace(
+        "| q02 | safety | yes | rag-general |", "| q03 | safety | yes | rag-general |"
+    )
+    probs = question_problems(partial, questions)
+    assert any("q02" in p for p in probs) and any("q03" in p for p in probs), probs
+    assert question_problems(good, questions), "a report with no per-question table passed"
+    assert question_problems(full, []), "an empty question set passed"
     print(f"benchmark_gate self-test: ok (kept best {METRIC_ARM} = {best:.2f})")
     return 0
 
@@ -130,6 +184,7 @@ def main(argv: list[str]) -> int:
     )
     chk.add_argument("--kept", default=Path("docs/benchmarks"), type=Path)
     chk.add_argument("--tolerance", default=0.05, type=float)
+    chk.add_argument("--questions", type=Path, help="benchmark_questions.json (resources tarball)")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
@@ -139,6 +194,12 @@ def main(argv: list[str]) -> int:
     new_path, kept_path = newest(args.new), newest(args.kept)
     print(f"new: {new_path}\nkept: {kept_path}")
     ok, lines = check(new_path.read_text(), kept_path.read_text(), args.tolerance)
+    if args.questions is not None:
+        problems = question_problems(new_path.read_text(), json.loads(args.questions.read_text()))
+        if problems:
+            ok = False
+            lines = lines[:-1] + [f"FAIL: {p} ({args.questions})" for p in problems]
+            lines.append("the model is not promoted")
     print("\n".join(lines))
     return 0 if ok else 1
 
