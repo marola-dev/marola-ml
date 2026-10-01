@@ -1,0 +1,4 @@
+# actionlint config.
+self-hosted-runner:
+  labels:
+    - marola-sea

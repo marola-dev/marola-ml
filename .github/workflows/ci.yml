@@ -1,0 +1,64 @@
+name: CI
+
+# The devkit's reusable workflows at the pinned tag (MIP-0070 §5.6). Bump the tag here, the
+# devkit-ref inputs and flake.nix's input together.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.2
+    with:
+      hadolint-version: "2.14.0"
+      hadolint-files: Dockerfile.local
+      shellcheck-files: scripts/*.sh
+
+  # build_dataset.py and build_dpo_dataset.py read the pinned corpus and resources: fetched first.
+  python:
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.2
+    with:
+      ruff-version: "0.16.5"
+      self-test-commands: |
+        scripts/corpus-fetch.sh --self-test
+        scripts/resources-fetch.sh --self-test
+        scripts/app-image.sh --self-test
+        scripts/benchmark.sh --self-test
+        scripts/api-docs.sh --self-test
+        scripts/marola-sea-pull.sh --self-test
+        python3 scripts/benchmark_gate.py --self-test
+        python3 scripts/analyze_training.py --self-test
+        python3 finetune/train_lora.py --self-test
+        python3 finetune/preflight.py --self-test
+        python3 finetune/merge_export.py --self-test
+        scripts/corpus-fetch.sh
+        scripts/resources-fetch.sh
+        python3 finetune/build_dataset.py --self-test
+        python3 finetune/build_dpo_dataset.py --self-test
+
+  # marola-sea-publish.yml is the one self-hosted workflow, and no pull request may reach it.
+  runners:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: marola-dev/marola-devkit
+          ref: v0.2.2
+          path: .tmp/devkit
+      - run: python3 .tmp/devkit/scripts/workflow_runners.py .github/workflows
+
+  agents:
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.2
+    with:
+      devkit-ref: v0.2.2

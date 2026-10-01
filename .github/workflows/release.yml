@@ -1,0 +1,36 @@
+name: release
+
+# A v* tag publishes api-docs.tar.gz (pdoc of finetune/ and scripts/) on that tag's GitHub
+# release; the umbrella's docs build folds the latest one in under repos/marola-ml/api/
+# (MIP-0070 §5.5). A tag's asset is immutable: a re-run that finds it attached fails.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+jobs:
+  api-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pdoc==16.0.0"
+      - run: scripts/api-docs.sh .tmp
+      - name: attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" .tmp/api-docs.tar.gz
+          else
+            gh release create "$TAG" .tmp/api-docs.tar.gz --verify-tag --title "marola-ml $TAG" \
+              --notes "pdoc of finetune/ and scripts/ at $TAG, for docs.marola.dev."
+          fi

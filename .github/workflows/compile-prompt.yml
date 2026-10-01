@@ -1,0 +1,102 @@
+name: compile prompt (DSPy, then a PR to the app)
+
+# MIP-0070 §5.4 ml → app: the compiled prompts reach the app as a pull request it reviews, never as
+# a write into its tree. The compile calls an LLM many times, so it is a manual step: dispatch only,
+# and only a model Ollama serves inside this job (free), never a paid endpoint (AGENTS.md cost rule).
+# The PR is opened with MAROLA_CROSS_REPO_PAT; the app lives in marola until MIP-0070 task 15.
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Ollama model to compile against (pulled into the job; the app's local default is llama3.2)"
+        type: string
+        default: "llama3.2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compile-prompt
+  cancel-in-progress: false
+
+env:
+  APP_REPO: marola-dev/marola
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      ollama:
+        image: ollama/ollama:0.33.3
+        ports: ["11434:11434"]
+    steps:
+      # Before the compile, which can take an hour: without the PAT the PR step could only fail.
+      - name: MAROLA_CROSS_REPO_PAT is available to this repo
+        env:
+          PAT: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+        run: '[ -n "$PAT" ] || { echo "::error::MAROLA_CROSS_REPO_PAT is not granted to this repo"; exit 1; }'
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r dspy/requirements.txt
+
+      - name: pull the model into the job's Ollama
+        env:
+          MODEL: ${{ inputs.model }}
+        run: |
+          [[ "$MODEL" =~ ^[a-z0-9][a-z0-9._-]*(:[a-z0-9._-]+)?$ ]] || { echo "::error::not an Ollama model name: '$MODEL'"; exit 1; }
+          curl -fsS http://localhost:11434/api/pull -d "{\"model\": \"$MODEL\", \"stream\": false}"
+
+      - name: compile both prompts into .tmp/compiled
+        env:
+          MAROLA_DSPY_MODEL: ollama_chat/${{ inputs.model }}
+          MAROLA_DSPY_API_BASE: http://localhost:11434
+        run: python3 dspy/compile_recommendation_prompt.py --out .tmp/compiled
+
+      - name: both artifacts exist and parse
+        run: |
+          for f in recommendation_prompt.json review_prompt.json; do
+            python3 -m json.tool ".tmp/compiled/$f" >/dev/null || { echo "::error::.tmp/compiled/$f missing or not JSON"; exit 1; }
+          done
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compiled-prompt-${{ github.run_id }}
+          path: .tmp/compiled/
+
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ env.APP_REPO }}
+          path: app
+          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+
+      - name: open the PR in the app
+        env:
+          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          MODEL: ${{ inputs.model }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BRANCH: ml/compiled-prompt-${{ github.run_id }}
+        run: |
+          cp .tmp/compiled/recommendation_prompt.json .tmp/compiled/review_prompt.json app/core/src/main/resources/
+          cd app
+          if git diff --quiet -- core/src/main/resources; then echo "the compiled prompts are unchanged — no PR"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add core/src/main/resources/recommendation_prompt.json core/src/main/resources/review_prompt.json
+          git commit -q -F - <<MSG
+          feat(prompt): recompile the summarizer and reviewer prompts on $MODEL
+
+          marola-ml's DSPy compile (dspy/compile_recommendation_prompt.py), run $RUN_URL.
+          Re-run \`just benchmark\` against this branch before merging.
+
+          Tested: compile_recommendation_prompt.py on ollama_chat/$MODEL in the run above; both files parse as JSON
+          Cost: \$0 · a local Ollama model in a hosted runner
+          MSG
+          git push -q origin "$BRANCH"
+          gh pr create --repo "$APP_REPO" --base main --head "$BRANCH" \
+            --title "feat(prompt): recompile the prompts on $MODEL (marola-ml)" \
+            --body "The compiled prompts from $RUN_URL. Re-run \`just benchmark\` against this branch and compare with marola-ml's docs/benchmarks/ before merging."

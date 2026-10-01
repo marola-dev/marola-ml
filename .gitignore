@@ -1,0 +1,14 @@
+.tmp/
+.devkit
+result
+result-*
+.claude/settings.local.json
+__pycache__/
+.ruff_cache/
+dspy/.venv/
+# the benchmark's reports, `just benchmark`
+/data/
+/finetune/data/*
+!/finetune/data/.gitkeep
+/finetune/out/*
+!/finetune/out/.gitkeep
