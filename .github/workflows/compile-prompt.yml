@@ -38,7 +38,7 @@ jobs:
           PAT: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
         run: '[ -n "$PAT" ] || { echo "::error::MAROLA_CROSS_REPO_PAT is not granted to this repo"; exit 1; }'
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install -r dspy/requirements.txt
