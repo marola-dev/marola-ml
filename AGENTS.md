@@ -39,8 +39,8 @@ fine-tune (marola-sea), and the benchmark gate with its kept runs.
 
 | Direction | Contract | Pinned by |
 |---|---|---|
-| app → ml | The app image, whose `--benchmark` is the benchmark runner | `marola-image` (`ghcr.io/marola-dev/marola:jvm-<sha>@sha256:<digest>`, `scripts/app-image.sh`) |
-| app → ml | The resources tarball `ml-resources-<tag>.tar.gz` on an app release: the compiled prompts, `sea_lore.json`, `benchmark_questions.json`. v0.1.0 is a stopgap release on marola, made by hand; task 15 moves the source to marola-app | `resources.version`; `just resources-fetch` unpacks it into `.tmp/resources` |
+| app → ml | The app image, whose `--benchmark` is the benchmark runner | `marola-image` (`ghcr.io/marola-dev/marola-app:jvm-<sha>@sha256:<digest>`, `scripts/app-image.sh`) |
+| app → ml | The resources tarball `ml-resources-<tag>.tar.gz` on an app release: the compiled prompts, `sea_lore.json`, `benchmark_questions.json`. marola-app's `release.yml` attaches it to each `v*` tag | `resources.version`; `just resources-fetch` unpacks it into `.tmp/resources` |
 | corpus → ml | `marola-corpus-<tag>.tar.gz` | `corpus.version`; `just corpus-fetch` unpacks it into `.tmp/knowledge` |
 | ml → app | The compiled prompts, as a PR to the app's `core/src/main/resources/` (`compile-prompt.yml`) | The files in the app |
 | ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marola-sea on Hugging Face (`marola-sea-publish.yml`) | Image tag; model repo |

@@ -8,7 +8,7 @@ marola-sea fine-tune (MIP-0025, MIP-0048) and the benchmark gate (MIP-0008 §5.3
 | Piece | Where |
 |---|---|
 | The app image the benchmark runs | `marola-image`, read by [`scripts/app-image.sh`](https://github.com/marola-dev/marola-ml/blob/main/scripts/app-image.sh) |
-| The app's resources (compiled prompts, sea lore, the question set) | `ml-resources-<tag>.tar.gz` on the app release `resources.version` names (v0.1.0: a stopgap release on marola, made by hand from its `scripts/build-resources-tarball.sh` at 9c4483c; task 15 moves the source to marola-app's releases), unpacked by [`scripts/resources-fetch.sh`](https://github.com/marola-dev/marola-ml/blob/main/scripts/resources-fetch.sh) |
+| The app's resources (compiled prompts, sea lore, the question set) | `ml-resources-<tag>.tar.gz` on the marola-app release `resources.version` names, unpacked by [`scripts/resources-fetch.sh`](https://github.com/marola-dev/marola-ml/blob/main/scripts/resources-fetch.sh) |
 | The corpus | `marola-corpus-<tag>.tar.gz`, pinned in `corpus.version` |
 | The compiled prompts, back to the app | a PR from [`compile-prompt.yml`](https://github.com/marola-dev/marola-ml/blob/main/.github/workflows/compile-prompt.yml) |
 | The kept benchmark runs | [`docs/benchmarks/`](https://github.com/marola-dev/marola-ml/tree/main/docs/benchmarks) (on GitHub: the docs site leaves `benchmarks/` out as repo artefacts) |
