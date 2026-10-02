@@ -8,9 +8,8 @@
 #   scripts/resources-fetch.sh              # resolve the pin in the repo root's resources.version
 #   scripts/resources-fetch.sh --self-test
 #
-# MAROLA_RESOURCES_URL overrides the release base (the self-test serves file:// fixtures). v0.1.0
-# is a stopgap release on marola, made by hand from its build-resources-tarball.sh; MIP-0070 task 15
-# moves the source to marola-app's releases, and the default base with it.
+# MAROLA_RESOURCES_URL overrides the release base (the self-test serves file:// fixtures). The
+# default is marola-app's releases, whose release.yml attaches the tarball to each v* tag.
 set -euo pipefail
 
 FILES=(recommendation_prompt.json review_prompt.json sea_lore.json benchmark_questions.json)
@@ -22,7 +21,7 @@ fetch() {
   if [ -d "$root/.tmp/resources" ] && [ "$(cat "$root/.tmp/resources.version" 2>/dev/null)" = "$pin" ]; then
     return 0
   fi
-  base="${MAROLA_RESOURCES_URL:-https://github.com/marola-dev/marola/releases/download}"
+  base="${MAROLA_RESOURCES_URL:-https://github.com/marola-dev/marola-app/releases/download}"
   mkdir -p "$root/.tmp"
   (
     tmp="$(mktemp -d "$root/.tmp/resources-fetch.XXXXXX")"

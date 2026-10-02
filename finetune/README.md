@@ -97,7 +97,7 @@ that write-up explains is expected (nothing in tasks 2-5's training data targets
 discipline) and not evidence the recipe is broken, not a favorable number picked to declare
 success.
 
-## As an image: `ghcr.io/marola-dev/marola:local` (MIP-0008)
+## As an image: `ghcr.io/marola-dev/marola-ml:local` (MIP-0008)
 
 **Built with Llama.** `:local` redistributes Meta's Llama 3.2 weights under the [Llama 3.2
 Community License](https://www.llama.com/llama3_2/license/); the agreement and the Acceptable Use

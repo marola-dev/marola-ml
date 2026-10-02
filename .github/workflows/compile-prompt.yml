@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_REPO: marola-dev/marola
+  APP_REPO: marola-dev/marola-app
 
 jobs:
   compile:
