@@ -1,11 +1,17 @@
 # marola-ml
 
 The offline Python behind [marola](https://github.com/marola-dev/marola): the DSPy step that
-compiles the prompts the app replays, the fine-tune that produces marola-sea, and the benchmark
-gate that decides whether a model is promoted. None of it runs when the app answers a question.
+compiles the prompts the app replays, the fine-tune that produces marola-sea (MIP-0025, MIP-0048),
+and the benchmark gate that decides whether a model is promoted. None of it runs when the app
+answers a question.
 
 It is one of the marola repos under the [umbrella](https://github.com/marola-dev/marola)
 (MIP-0070), and its history before the split is marola's, filtered to these files.
+
+**Status:** the prompt compile (`compile-prompt.yml`, dispatched by hand) and the benchmark gate
+(`docker-local.yml`, on a push to main touching the model or the gate) run in CI. marola-sea has
+trained only at the `tiny` preset; its publish waits on the HF_TOKEN secret and the marola-sea
+runners.
 
 ## Run it
 
