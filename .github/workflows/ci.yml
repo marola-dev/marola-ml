@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   static:
-    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.2
+    uses: marola-dev/marola-devkit/.github/workflows/static-ci.yml@v0.2.4
     with:
       hadolint-version: "2.14.0"
       hadolint-files: Dockerfile.local
@@ -25,7 +25,7 @@ jobs:
 
   # build_dataset.py and build_dpo_dataset.py read the pinned corpus and resources: fetched first.
   python:
-    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.2
+    uses: marola-dev/marola-devkit/.github/workflows/python-ci.yml@v0.2.4
     with:
       ruff-version: "0.16.5"
       self-test-commands: |
@@ -54,11 +54,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: marola-dev/marola-devkit
-          ref: v0.2.2
+          ref: v0.2.4
           path: .tmp/devkit
       - run: python3 .tmp/devkit/scripts/workflow_runners.py .github/workflows
 
   agents:
-    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.2
+    uses: marola-dev/marola-devkit/.github/workflows/agents-check.yml@v0.2.4
     with:
-      devkit-ref: v0.2.2
+      devkit-ref: v0.2.4
