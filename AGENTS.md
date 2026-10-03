@@ -57,7 +57,7 @@ just quality                 # every gate CI runs (fetches the pinned corpus and
 just finetune-dataset        # finetune/data/{train,eval}.jsonl
 just benchmark               # the pinned app image's --benchmark on the local Ollama, then the gate
 just compile-prompt          # DSPy into .tmp/compiled (costs LLM calls; see dspy/README.md)
-just api-docs                # .tmp/api-docs.tar.gz, as release.yml builds it
+just api-docs                # <out>/python/ pdoc, as api-docs.yml's CI check runs it
 ```
 
 The app's own recipes (`just run`, `just e2e`, `just ask`) run in an app checkout.
