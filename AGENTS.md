@@ -71,7 +71,9 @@ As in the umbrella, and stricter here, because this repo is where the money is:
 - `marola-sea-publish.yml` trains for hours on the self-hosted `marola-sea` runner and uploads to
   Hugging Face, which cannot be taken back. Dispatch only, by a human; it may never gain a trigger a
   pull request can reach (`ci.yml`'s `runners` job enforces it). It waits on the HF_TOKEN secret,
-  and separately on the marola-sea runners being registered for this repo.
+  and separately on the marola-sea runners being registered for this repo. marola already has the
+  tag `marola-sea-v1`, which this repo's history does not carry: dispatch the first publish here
+  with `major_version: 2`.
 - An agent does not dispatch workflows, create tags or releases (`.claude/settings.json` denies
   `gh workflow run`, `gh release` and `git tag`).
 
