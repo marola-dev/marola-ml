@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
-# api-docs — pdoc over finetune/ and scripts/. The name and layout of the default [out-dir] mode is
-# the umbrella's old contract (its scripts/fetch-api-docs.sh unpacks the latest release's
-# api-docs.tar.gz under repos/marola-ml/api/, MIP-0070 §5.5); --dir is MIP-0074 §5.2's: the devkit's
-# api-docs.yml runs `just api-docs <out>` as a PR check and, on a push, publishes it to the
-# `api-docs` branch. Either way the umbrella's docs build fails on a third-party <script src>, so
-# this fails it first.
+# api-docs — pdoc over finetune/ and scripts/: a tarball for release.yml's asset (MIP-0070 §5.5)
+# or, with --dir, raw pages for the devkit's api-docs.yml (MIP-0074 §5.2). Fails on a third-party
+# <script src>.
 #
 #   scripts/api-docs.sh [out-dir]   # default .tmp: <out-dir>/api-docs.tar.gz (release.yml's asset)
 #   scripts/api-docs.sh --dir <out> # <out>/python/, raw pages (the devkit api-docs.yml caller)
 #   scripts/api-docs.sh --self-test
 #
-# PDOC overrides the pdoc command (default `python3 -m pdoc`; the self-test stubs it).
+# PDOC overrides the pdoc command (default `pdoc`; the self-test stubs it).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# pdoc's html at $1 (created if missing); fails on no output or a third-party <script src>.
+# pdoc's html at $1 (emptied first); fails on no output or a third-party <script src>.
 generate() {
   local dest="$1" pdoc
-  read -ra pdoc <<<"${PDOC:-python3 -m pdoc}"
+  read -ra pdoc <<<"${PDOC:-pdoc}"
+  rm -rf "$dest"
   mkdir -p "$dest"
   # finetune/ keeps torch/peft/trl behind lazy imports, so pdoc imports it without the ML stack.
   (cd "$root" && "${pdoc[@]}" -o "$dest" finetune/*.py scripts/*.py) >&2
@@ -69,7 +67,9 @@ EOF
   if STUB=external build "$t/ext" 2>/dev/null; then echo "FAIL: a third-party script passed"; f=1; fi
   if STUB=empty build "$t/empty" 2>/dev/null; then echo "FAIL: an empty pdoc run passed"; f=1; fi
   [ ! -e "$t/ext/api-docs.tar.gz" ] && [ ! -e "$t/empty/api-docs.tar.gz" ] || { echo "FAIL: a failed run left a tarball"; f=1; }
+  mkdir -p "$t/dirok/python" && echo stale >"$t/dirok/python/gone.html"
   STUB=clean build_dir "$t/dirok" 2>/dev/null || { echo "FAIL: --dir with a clean pdoc run"; f=1; }
+  [ ! -e "$t/dirok/python/gone.html" ] || { echo "FAIL: --dir kept a stale page"; f=1; }
   [ -f "$t/dirok/python/index.html" ] && [ -f "$t/dirok/python/build_dataset.html" ] \
     || { echo "FAIL: --dir did not write the pages under python/"; f=1; }
   [ ! -e "$t/dirok/python/api-docs.tar.gz" ] || { echo "FAIL: --dir produced a tarball"; f=1; }
