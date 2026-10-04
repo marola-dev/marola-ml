@@ -44,7 +44,7 @@ fine-tune (marola-sea), and the benchmark gate with its kept runs.
 | corpus → ml | `marola-corpus-<tag>.tar.gz` | `corpus.version`; `just corpus-fetch` unpacks it into `.tmp/knowledge` |
 | ml → app | The compiled prompts, as a PR to the app's `core/src/main/resources/` (`compile-prompt.yml`) | The files in the app |
 | ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marola-sea on Hugging Face (`marola-sea-publish.yml`) | Image tag; model repo |
-| ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); `api-docs.tar.gz`, pdoc of `finetune/` and `scripts/`, on each `v*` release (`release.yml`) | Pulled by the aggregator |
+| ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); pdoc of `finetune/` and `scripts/` on the `api-docs` branch (`api-docs.yml`), and as `api-docs.tar.gz` on each `v*` release (`release.yml`) | Pulled by the aggregator |
 
 No workflow here builds the app or reads its tree. Bump `marola-image` and `resources.version`
 together: the gate fails a run whose question ids differ from the pinned question set.
@@ -56,11 +56,33 @@ nix develop                  # the lint tools, the devkit's tools, the CUDA venv
 just quality                 # every gate CI runs (fetches the pinned corpus and resources first)
 just finetune-dataset        # finetune/data/{train,eval}.jsonl
 just benchmark               # the pinned app image's --benchmark on the local Ollama, then the gate
-just compile-prompt          # DSPy into .tmp/compiled (costs LLM calls; see dspy/README.md)
+just compile-prompt          # DSPy into .tmp/compiled (costs LLM calls; see docs/3-development_prompt-compile.md)
 just api-docs                # <out>/python/ pdoc, as api-docs.yml's CI check runs it
 ```
 
 The app's own recipes (`just run`, `just e2e`, `just ask`) run in an app checkout.
+
+## Docs
+
+`README.md` is the landing: what the repo is, how to run it, the repo map, its contracts, and
+links. There is no `docs/index.md`. `docs/` holds numbered pages, not directories (MIP-0074 §5.2):
+`1-design` (the three jobs, the module map), `2-libraries`, `3-development` (environment, GPU, the
+self-hosted runner, CI, secrets, cost, publishing, pins) with `_prompt-compile`, `_finetune` and
+`_benchmark-gate` beside it. The H1 is the nav label. `docs/benchmarks/` is the gate's kept record,
+off the site. pdoc output is never committed: `api-docs.yml` writes it to the `api-docs` branch,
+and the README links it as `api-docs/python/`. A decision that starts and ends here is an ADR at
+`docs/adr/NNNN-<slug>.md`; anything crossing a repo boundary is an umbrella MIP.
+
+- **Links**: relative inside the repo, written to work on GitHub (`../AGENTS.md`,
+  `../dspy/compile_recommendation_prompt.py` from `docs/`); the docs build turns a link outside
+  `docs/` into its GitHub blob URL at the built commit. Another repo or the umbrella is linked by
+  `https://docs.marola.dev/…`, or by its GitHub URL for a file that is not a page.
+- **Recipes**: a doc names only this repo's and the devkit's recipes. Any other (the app's
+  `just run -- --summarize`) carries the checkout marker: "in a marola-app checkout" in the same
+  sentence, or `# in a marola-app checkout` as a fence's first line.
+- `just quality` runs `docs-lint` (MIP-0074 §7): it fails on a foreign recipe without the marker,
+  another repo's paths (`core/`, `knowledge/`, …), a relative link that leaves the repo,
+  `docs/index.md`, and stale split-era wording.
 
 ## Cost & deployment safety (hard rule)
 
@@ -71,9 +93,8 @@ As in the umbrella, and stricter here, because this repo is where the money is:
 - `marola-sea-publish.yml` trains for hours on the self-hosted `marola-sea` runner and uploads to
   Hugging Face, which cannot be taken back. Dispatch only, by a human; it may never gain a trigger a
   pull request can reach (`ci.yml`'s `runners` job enforces it). It waits on the HF_TOKEN secret,
-  and separately on the marola-sea runners being registered for this repo. marola already has the
-  tag `marola-sea-v1`, which this repo's history does not carry: dispatch the first publish here
-  with `major_version: 2`.
+  and separately on the marola-sea runners being registered for this repo. Its first dispatch
+  here needs `major_version: 2` ([publishing](docs/3-development.md#publishing-marola-sea)).
 - An agent does not dispatch workflows, create tags or releases (`.claude/settings.json` denies
   `gh workflow run`, `gh release` and `git tag`).
 

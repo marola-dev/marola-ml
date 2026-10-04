@@ -26,10 +26,10 @@ just benchmark          # the pinned app image's --benchmark on your Ollama, the
 
 - [`dspy/`](https://github.com/marola-dev/marola-ml/tree/main/dspy): the prompt compile. The
   `compile prompt` workflow runs it on an Ollama model inside the job and opens a PR in the app
-  with the two compiled files.
+  with the two compiled files ([how to run it](docs/3-development_prompt-compile.md)).
 - [`finetune/`](https://github.com/marola-dev/marola-ml/tree/main/finetune): Tier 1 (a Modelfile)
   and Tier 2 (QLoRA SFT + DPO) of marola-sea, with the dataset builders and the Hugging Face
-  publish. Its README is the honest status of each tier.
+  publish. [Its page](docs/3-development_finetune.md) is the honest status of each tier.
 - [`docs/benchmarks/`](https://github.com/marola-dev/marola-ml/blob/main/docs/benchmarks/2026-09-05.md): the kept benchmark runs.
   `scripts/benchmark_gate.py` fails a new run that falls more than 0.05 below the best of them, or
   below the plain prompt — [the gate's doc](docs/3-development_benchmark-gate.md) has the
@@ -50,5 +50,13 @@ a PR; marola-sea publishes to Hugging Face. The full table, with what pins each,
 
 ## Docs
 
-[docs/3-development_benchmark-gate.md](docs/3-development_benchmark-gate.md) and
-[AGENTS.md](https://github.com/marola-dev/marola-ml/blob/main/AGENTS.md).
+- [Design](docs/1-design.md): the three jobs, none on the request path, and the module map.
+- [Libraries](docs/2-libraries.md): each library, model and pinned tool, and why.
+- [Development](docs/3-development.md): environment, GPU, the self-hosted runner, CI, secrets,
+  cost and who may run what, publishing marola-sea, the pins.
+- [The prompt compile](docs/3-development_prompt-compile.md),
+  [the fine-tune](docs/3-development_finetune.md),
+  [the benchmark gate](docs/3-development_benchmark-gate.md): each job, how to run it.
+- [API docs](https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/): pdoc of `finetune/` and
+  `scripts/`, from the `api-docs` branch `api-docs.yml` rewrites on each push to main.
+- [AGENTS.md](AGENTS.md): the rules for agents working here.
