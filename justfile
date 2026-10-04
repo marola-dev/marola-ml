@@ -106,7 +106,7 @@ benchmark model="marola-llama3.2": resources-fetch
 benchmark-gate tolerance="0.05": resources-fetch
     python3 scripts/benchmark_gate.py check --new data --kept docs/benchmarks --questions .tmp/resources/benchmark_questions.json --tolerance {{ tolerance }}
 
-# DSPy compile into .tmp/compiled (an LLM in the loop: see dspy/README.md for the cost).
+# DSPy compile into .tmp/compiled (an LLM in the loop: see docs/3-development_prompt-compile.md for the cost).
 compile-prompt *args:
     python3 dspy/compile_recommendation_prompt.py --out .tmp/compiled {{ args }}
 

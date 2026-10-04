@@ -1,5 +1,5 @@
 # marola-sea-<preset> — Tier 2: a preset's base model plus the QLoRA adapter train_lora.py
-# produced, converted to GGUF with llama.cpp's convert_lora_to_gguf.py (see README.md).
+# produced, converted to GGUF with llama.cpp's convert_lora_to_gguf.py (see docs/3-development_finetune.md).
 # Build it with `just finetune-adapter-model preset=<preset>`, which rewrites the two lines below
 # from train_lora.PRESETS and creates `marola-sea-<preset>` — one Ollama model per base, so a
 # Qwen build does not overwrite a SmolLM2 one.

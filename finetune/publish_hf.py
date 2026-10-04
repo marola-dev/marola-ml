@@ -10,7 +10,7 @@ human's own one-time setup per `AGENTS.md`'s "never hardcode a key" rule.
 This is the export chain's *last* step only. Get the `.gguf` file(s) first:
   1. `just finetune-train preset=<preset>` (LoRA adapter, finetune/out/<preset>/adapter/)
   2. merge + convert with llama.cpp's `convert_hf_to_gguf.py` (base) or use `ollama create` +
-     `Modelfile.adapter` for local-only use without merging (see finetune/README.md)
+     `Modelfile.adapter` for local-only use without merging (see docs/3-development_finetune.md)
   3. this script, pointed at the resulting .gguf file(s)
 
 Deliberately does not shell out to `ollama push` (MIP-0025 §5.1(2)'s optional second channel) —
@@ -115,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         "--base-license",
         default="apache-2.0",
         help="the BASE model's licence id (not a generic default — check it per MIP-0025 §5.1(3): "
-        "a Llama-derived model has a different name requirement entirely, see finetune/README.md)",
+        "a Llama-derived model has a different name requirement entirely, see docs/3-development_finetune.md)",
     )
     parser.add_argument(
         "--eval-note",

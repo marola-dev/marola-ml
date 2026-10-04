@@ -1,4 +1,4 @@
-# marola fine-tuning — local only (Ollama + llama3.2)
+# Fine-tuning (marola-sea)
 
 Two tiers, honestly labelled. Both produce a model named `marola-llama3.2` that the Scala side
 uses with nothing more than `MAROLA_LOCAL_LLM_MODEL=marola-llama3.2`, no code change.
@@ -6,9 +6,9 @@ uses with nothing more than `MAROLA_LOCAL_LLM_MODEL=marola-llama3.2`, no code ch
 | Tier | What it is | Cost | Status |
 |---|---|---|---|
 | **1. Modelfile variant** (`Modelfile`) | `llama3.2` with marola's system prompt, tone and decoding parameters baked in. No weights change. | seconds, CPU | **run and verified** (see below) |
-| **2. QLoRA adapter** (`train_lora.py` + `Modelfile.adapter`) | A real LoRA fine-tune on marola's own examples, converted to GGUF and attached to the base model via Ollama's `ADAPTER`. | `tiny`: minutes on CPU; `base` (gated Llama 3.2 3B): hours on CPU, minutes on a GPU; ~6GB download | **run, `tiny` preset verified** (SmolLM2-360M, 2026-09-06: `finetune-dataset` → `finetune-train preset=tiny --no-4bit --epochs 3` → `convert_lora_to_gguf.py` → `ollama create` → `just run -- --summarize` produced a real reply from the tuned model, end to end. Eval loss fell across all 3 epochs: 3.032 → 2.866 → 2.799: real learning, not noise. Quality itself is rough at this scale, expected per the ladder below; `small`/`base` are still not run: no GPU here, and `base`'s weights need a Hugging Face login) |
+| **2. QLoRA adapter** (`train_lora.py` + `Modelfile.adapter`) | A real LoRA fine-tune on marola's own examples, converted to GGUF and attached to the base model via Ollama's `ADAPTER`. | `tiny`: minutes on CPU; `base` (gated Llama 3.2 3B): hours on CPU, minutes on a GPU; ~6GB download | **run, `tiny` preset verified** (SmolLM2-360M, 2026-09-06: `finetune-dataset` → `finetune-train preset=tiny --no-4bit --epochs 3` → `convert_lora_to_gguf.py` → `ollama create` → `just run -- --summarize` in a marola-app checkout produced a real reply from the tuned model, end to end. Eval loss fell across all 3 epochs: 3.032 → 2.866 → 2.799: real learning, not noise. Quality itself is rough at this scale, expected per the ladder below; `small`/`base` are still not run: no GPU here, and `base`'s weights need a Hugging Face login) |
 
-Tier 1 is not fine-tuning in the weights sense and this README does not pretend it is. It exists
+Tier 1 is not fine-tuning in the weights sense and this page does not pretend it is. It exists
 because it is the cheapest way to get a consistently marola-flavoured model *today*, and because
 the dataset builder for Tier 2 is useful on its own.
 
@@ -16,15 +16,22 @@ the dataset builder for Tier 2 is useful on its own.
 
 ```bash
 just finetune-model            # ollama create marola-llama3.2 -f finetune/Modelfile
+```
+
+Then use it from the app:
+
+```bash
+# in a marola-app checkout
 export MAROLA_LOCAL_LLM_MODEL=marola-llama3.2
 just run -- --summarize
 ```
 
-## Tier 2 — QLoRA adapter (written, not run)
+## Tier 2 — QLoRA adapter (run at the `tiny` preset)
 
-1. Build the dataset (chat-format JSONL) from what the repo already has: the DSPy-compiled demos
-   (`core/src/main/resources/*.json`), the sea-lore entries, and question/answer pairs derived
-   from the knowledge corpus:
+1. Build the dataset (chat-format JSONL) from the pinned inputs: the DSPy-compiled demos and the
+   sea-lore entries from the app's resources tarball (`resources.version`, unpacked into
+   `.tmp/resources` by `just resources-fetch`), and question/answer pairs derived from the
+   knowledge corpus (`corpus.version`, unpacked into `.tmp/knowledge` by `just corpus-fetch`):
 
    ```bash
    just finetune-dataset        # writes finetune/data/train.jsonl and finetune/data/eval.jsonl
@@ -32,19 +39,19 @@ just run -- --summarize
 
    Expect a few thousand examples (2026-09-07: 2,497 train + 277 eval), combining two new layers
    from MIP-0025 §4.3:
-   - **Layer 1 "Marine Corpus Domain"**: every real chunk and sentence in `knowledge/` asked
+   - **Layer 1 "Marine Corpus Domain"**: every real chunk and sentence in the corpus asked
      several paraphrased ways, so the fine-tune sees real domain facts, not just format/tone;
      each synthetic example is verified (`build_dataset.py --self-test`) to be a verbatim excerpt
-     of the `knowledge/*.md` source it cites, no invented facts.
+     of the corpus document it cites, no invented facts.
    - **Layer 2 "MCP Tool-Call SFT"**: synthetic questions mapped to a single JSON tool call for
      one of marola's four real MCP tools (`find_nearby_beaches`, `get_swim_recommendation`,
      `get_water_quality`, `ask_ocean_question`; names and schemas read straight from
-     `SwimConditionsMcpServer.scala`, not guessed). The same self-test checks every generated
+     marola-app's [`SwimConditionsMcpServer.scala`](https://github.com/marola-dev/marola-app/blob/main/cli/src/main/scala/marola/agent/SwimConditionsMcpServer.scala), not guessed). The same self-test checks every generated
      call is syntactically valid JSON naming a real tool with arguments matching its real schema,
      and that all four tools are covered.
 
-   Both self-tests are wired into `just quality-other`. The DSPy demos and sea-lore entries
-   remain the *format and tone* teachers `FUTURE-WORK.md` §9.1 step 4 describes.
+   Both self-tests are wired into `just quality`. The DSPy demos and sea-lore entries
+   remain the *format and tone* teachers [FUTURE-WORK](https://docs.marola.dev/4-Research-and-plans/FUTURE-WORK/) §9.1 step 4 describes.
 
 2. Train the adapter (needs `pip install -r requirements.txt`, a `huggingface-cli login` for the
    gated Llama weights, and ideally a GPU with 8GB+):
@@ -60,13 +67,13 @@ just run -- --summarize
    ollama create marola-llama3.2 -f Modelfile.adapter
    ```
 
-4. Evaluate before trusting it: run `just e2e` and `just run -- --summarize` with the new model,
-   and, the real test, compare reviewer scores over a held-out set (`FUTURE-WORK.md` §4.1).
+4. Evaluate before trusting it: in a marola-app checkout, run `just e2e` and `just run -- --summarize` with the new model,
+   and, the real test, compare reviewer scores over a held-out set ([FUTURE-WORK](https://docs.marola.dev/4-Research-and-plans/FUTURE-WORK/) §4.1).
 
 ## Layer 3 — DPO preference data + training (MIP-0025 §4.3 — **run, `tiny` preset verified**
 2026-09-07)
 
-`core/llm/Reviewer.scala`'s own reject/revise decisions are the preference signal: wherever the
+marola-app's [`Reviewer.scala`](https://github.com/marola-dev/marola-app/blob/main/core/src/main/scala/marola/llm/Reviewer.scala) reject/revise decisions are the preference signal: wherever the
 compiled `review_prompt.json` demos show a verdict other than `"approve"`, the reviewer's real
 `final_summary` is a correction of a real flawed draft: a (chosen, rejected) pair with no
 invented text on either side. Approved drafts carry no signal and produce no pair.
@@ -75,7 +82,7 @@ invented text on either side. Approved drafts carry no signal and produce no pai
 just finetune-dpo-dataset      # writes finetune/data/dpo_pairs.jsonl
 ```
 
-`build_dpo_dataset.py --self-test` (wired into `just quality-other`) checks this against both a
+`build_dpo_dataset.py --self-test` (wired into `just quality`) checks this against both a
 small fixture (asserting exactly one pair per reject/revise event, zero pairs for an all-approve
 fixture) and the real `review_prompt.json` demos (every generated pair's text matches a real
 demo's text verbatim).
@@ -89,7 +96,7 @@ just finetune-train-dpo preset=tiny -- --no-4bit --epochs 1   # continues from o
 (SmolLM2-360M), 2 real preference pairs, 1 epoch, chained after a real SFT run on the scaled-up
 Layer 1+2 dataset (eval loss 3.032 → **0.2594**, mean token accuracy **0.939**: real learning).
 The combined adapter was converted to GGUF and benchmarked
-(`docs/benchmarks/mip-0025/2026-09-07-task5-sft-dpo.md`, a subdirectory `benchmark_gate.py`'s
+([`benchmarks/mip-0025/2026-09-07-task5-sft-dpo.md`](benchmarks/mip-0025/2026-09-07-task5-sft-dpo.md), a subdirectory `benchmark_gate.py`'s
 promotion-gate `newest()` deliberately doesn't glob into, since this MIP-0025 experiment record is
 not the marola-local Docker image's real promotion-gate reference); honestly, the tiny tuned model
 scores *below* the untuned `llama3.2` baseline on `just benchmark`'s RAG-grounding task, which
@@ -110,9 +117,9 @@ from `main` whenever the Modelfile, the corpus, the prompts or the gate change, 
 `scripts/benchmark_gate.py` decide: the moving `:local` tag advances only if `rag-general`
 coverage (all) is within 0.05 of the best run kept in `docs/benchmarks/` and above the plain
 prompt's; otherwise `:local` stays where it was and the report is on the run. Use it with
-`docker compose --profile local run --rm marola-local --summarize …` (`docker-compose.yml`), with
-no pull, no `ollama create`. Tier 2 is not in the image until something has trained the
-adapter; the README above is still the honest status.
+`docker compose --profile local run --rm marola-local --summarize …` in a marola-app checkout (its
+`docker-compose.yml`), with no pull, no `ollama create`. Tier 2 is not in the image until something has trained the
+adapter; this page is still the honest status.
 
 ## Iterating on a local machine: the small-model ladder
 
@@ -142,11 +149,11 @@ different base model. This is checked from a marker file and `adapter_config.jso
 is even imported. Nothing is shared between a SmolLM2 run and a Qwen one.
 
 Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert → `ollama create` →
-`just benchmark` / `just run -- --summarize` → edit the dataset → repeat. Only when the tiny model
+`just benchmark` / `just run -- --summarize` in a marola-app checkout → edit the dataset → repeat. Only when the tiny model
 shows the format/tone you want is it worth paying for `small` or `base`. Tier 1 has the same knob:
 `just finetune-model base=llama3.2:1b` builds the persona variant on the 1B model.
 
-The same ladder applies to the RAG embedder (marola-corpus's `knowledge/README.md`): `all-minilm` (45MB) re-indexes
+The same ladder applies to the RAG embedder ([marola-corpus's notes](https://github.com/marola-dev/marola-corpus/blob/main/knowledge/README.md)): `all-minilm` (45MB) re-indexes
 the corpus in seconds, `nomic-embed-text` (274MB) is the quality option, `llama3.2` itself needs no
 extra download.
 
@@ -301,11 +308,11 @@ What's real today vs. what's still missing before "marola-sea-1.0" is a real, pu
 | A real training run on real hardware | **done**: `tiny` preset (SmolLM2-360M), CPU, eval loss 3.032→2.866→2.799 over 3 epochs |
 | LoRA → adapter-GGUF conversion | **done**: `finetune/out/tiny/adapter.gguf` exists locally (gitignored, not in git). Enough for local Ollama use via `Modelfile.adapter`; **not** enough to publish |
 | Adapter → merged model → quantized GGUF | **tooling done, run not done**: `finetune/merge_export.py` / `just finetune-merge`. Needs `pip install -r finetune/requirements.txt` and a llama.cpp checkout; this is the step that makes `ollama run hf.co/...` possible at all |
-| Runs end-to-end through marola | **done**: `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` |
+| Runs end-to-end through marola | **done**: `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` in a marola-app checkout |
 | HF publish tooling | **done this session**: `finetune/publish_hf.py` / `just finetune-publish`, not yet run against a real HF account |
 | Actual HF publish | **not done**: needs the maintainer's own `huggingface-cli login` and a real upload; nothing here can do that unattended. Publish the merged `marola-sea-tiny-Q4_K_M.gguf`, not the adapter |
 | `just benchmark` numbers for this checkpoint | **not done**: `docs/benchmarks/` has no `tiny`-preset run yet; do this before trusting it over the plain base model (§7 of MIP-0025) |
-| A `small`/`base`-preset run (better quality) | **not started**: `tiny` is a pipeline proof, explicitly not a quality bar (this README's own framing, top of file) |
+| A `small`/`base`-preset run (better quality) | **not started**: `tiny` is a pipeline proof, explicitly not a quality bar (this page's own framing, top of file) |
 | Ollama-registry push (optional 2nd channel) | **not started**: needs `ollama signin`, a human step (MIP-0025 §5.1(2)) |
 
 The `tiny` run's job was to validate the pipeline end to end on hardware anyone has, which it did.
@@ -315,7 +322,7 @@ already-verified plan.
 
 ## What is deliberately not here
 
-- No cloud training. Paid cloud fine-tuning would fall under `AGENTS.md`'s cost rule.
+- No cloud training. Paid cloud fine-tuning would fall under [`AGENTS.md`](../AGENTS.md#cost--deployment-safety-hard-rule)'s cost rule.
 - No attempt to fine-tune facts in. A 3B model with 40 examples will not learn marine biology; it
-  will learn to sound like it did. Facts come from `knowledge/` via RAG, with citations.
+  will learn to sound like it did. Facts come from marola-corpus via RAG, with citations.
 </content>

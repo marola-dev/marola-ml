@@ -1,6 +1,6 @@
-"""QLoRA fine-tune of one preset base model on marola's dataset — Tier 2 in README.md.
+"""QLoRA fine-tune of one preset base model on marola's dataset — Tier 2 in docs/3-development_finetune.md.
 
-STATUS: the `tiny` preset has been run end to end (see finetune/README.md); every larger preset is
+STATUS: the `tiny` preset has been run end to end (see docs/3-development_finetune.md); every larger preset is
 written against the documented peft/transformers/trl APIs and NOT RUN here. Treat a first run on a
 new preset as a debugging session, not a build step.
 
@@ -17,7 +17,7 @@ default**), `small`/`base` (Llama 3.2 1B/3B; the 3B is gated), `qwen-4b`/`qwen-7
 `qwen-27b` (Apache-2.0 throughout). tiny is the default rather than small so an unqualified run
 never silently produces a *Llama derivative*: the Llama 3.2 Community Licence requires such a
 model's name to begin with "Llama" and to ship the agreement plus a "Built with Llama" notice (see
-finetune/README.md). Both Llama presets remain available and are fine to use — they just have to
+docs/3-development_finetune.md). Both Llama presets remain available and are fine to use — they just have to
 be chosen, and their obligations met, on purpose.
 
 Switching base is safe by construction: each preset trains into its own `out/<preset>/` directory,
