@@ -149,7 +149,7 @@ different base model. This is checked from a marker file and `adapter_config.jso
 is even imported. Nothing is shared between a SmolLM2 run and a Qwen one.
 
 Loop: `just finetune-dataset` → `just finetune-train preset=tiny` → convert → `ollama create` →
-`just benchmark` / `just run -- --summarize` in a marola-app checkout → edit the dataset → repeat. Only when the tiny model
+`just benchmark`, or `just run -- --summarize` in a marola-app checkout → edit the dataset → repeat. Only when the tiny model
 shows the format/tone you want is it worth paying for `small` or `base`. Tier 1 has the same knob:
 `just finetune-model base=llama3.2:1b` builds the persona variant on the 1B model.
 
@@ -311,7 +311,7 @@ What's real today vs. what's still missing before "marola-sea-1.0" is a real, pu
 | Runs end-to-end through marola | **done**: `ollama create` + `Modelfile.adapter`, then `just run -- --summarize` in a marola-app checkout |
 | HF publish tooling | **done this session**: `finetune/publish_hf.py` / `just finetune-publish`, not yet run against a real HF account |
 | Actual HF publish | **not done**: needs the maintainer's own `huggingface-cli login` and a real upload; nothing here can do that unattended. Publish the merged `marola-sea-tiny-Q4_K_M.gguf`, not the adapter |
-| `just benchmark` numbers for this checkpoint | **not done**: `docs/benchmarks/` has no `tiny`-preset run yet; do this before trusting it over the plain base model (§7 of MIP-0025) |
+| `just benchmark` numbers for this checkpoint | **not done** as a gate reference: the kept runs the gate compares against (`docs/benchmarks/*.md`) hold no `tiny` checkpoint; the one `tiny` run is the SFT+DPO experiment record under `docs/benchmarks/mip-0025/`, which scored below plain `llama3.2`; do this before trusting it over the plain base model (§7 of MIP-0025) |
 | A `small`/`base`-preset run (better quality) | **not started**: `tiny` is a pipeline proof, explicitly not a quality bar (this page's own framing, top of file) |
 | Ollama-registry push (optional 2nd channel) | **not started**: needs `ollama signin`, a human step (MIP-0025 §5.1(2)) |
 

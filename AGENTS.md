@@ -70,7 +70,9 @@ links. There is no `docs/index.md`. `docs/` holds numbered pages, not directorie
 self-hosted runner, CI, secrets, cost, publishing, pins) with `_prompt-compile`, `_finetune` and
 `_benchmark-gate` beside it. The H1 is the nav label. `docs/benchmarks/` is the gate's kept record,
 off the site. pdoc output is never committed: `api-docs.yml` writes it to the `api-docs` branch,
-and the README links it as `api-docs/python/`. A decision that starts and ends here is an ADR at
+and the README links it at https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/ (a
+relative `api-docs/python/` from the README is a path outside `docs/`, which the docs build
+refuses); a `docs/` page may link it relatively. A decision that starts and ends here is an ADR at
 `docs/adr/NNNN-<slug>.md`; anything crossing a repo boundary is an umbrella MIP.
 
 - **Links**: relative inside the repo, written to work on GitHub (`../AGENTS.md`,
