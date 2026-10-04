@@ -110,7 +110,7 @@ benchmark-gate tolerance="0.05": resources-fetch
 compile-prompt *args:
     python3 dspy/compile_recommendation_prompt.py --out .tmp/compiled {{ args }}
 
-# <out>/python/ pdoc, the devkit's api-docs.yml caller (MIP-0074 §5.2; release.yml's tarball is separate).
+# <out>/python/ pdoc, the devkit's api-docs.yml caller (MIP-0074 §5.2).
 api-docs out=".tmp/api-docs":
     scripts/api-docs.sh --dir {{ out }}
 

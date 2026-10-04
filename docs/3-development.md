@@ -60,7 +60,6 @@ not fit.
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
 | `marola-sea-publish.yml` | dispatch | train, merge, publish to Hugging Face, tag ([publishing](#publishing-marola-sea)) |
-| `release.yml` | a `v*` tag | attach `api-docs.tar.gz` to the release |
 | `notify-umbrella.yml` | push to main touching `README.md` or `docs/` | ask the umbrella to rebuild docs.marola.dev |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
@@ -120,9 +119,8 @@ is on [the fine-tune page](3-development_finetune.md#publishing-to-hugging-face-
 | `corpus.version` | the marola-corpus release the dataset and Layer 1 read | on its own |
 | the devkit (`v0.4.1`) | `flake.nix`'s input, every workflow's `@tag` and `devkit-ref`, `ci.yml`'s two devkit checkouts, `.claude/settings.json`'s marketplace `ref` | all together, in one PR |
 
-## Releases and docs
+## API docs
 
-A `v*` tag makes a GitHub release with `api-docs.tar.gz` (`release.yml`). The API docs readers see
-come from the `api-docs` branch, which `api-docs.yml` rewrites on each push to main. The README
-and `docs/` are this repo's pages on docs.marola.dev; `docs/benchmarks/` stays off the site, and
-links to it become GitHub links.
+The API docs readers see come from the `api-docs` branch, which `api-docs.yml` rewrites on each
+push to main. The README and `docs/` are this repo's pages on docs.marola.dev; `docs/benchmarks/`
+stays off the site, and links to it become GitHub links.
