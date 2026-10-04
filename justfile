@@ -118,7 +118,7 @@ api-docs out=".tmp/api-docs":
 quality: corpus-fetch resources-fetch
     #!/usr/bin/env bash
     set -euo pipefail
-    for tool in ruff shellcheck actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality: $tool not installed — run inside 'nix develop'" >&2; exit 1; }; done
+    for tool in ruff shellcheck actionlint hadolint agents-check workflow-runners docs-lint; do command -v "$tool" >/dev/null || { echo "quality: $tool not installed — run inside 'nix develop'" >&2; exit 1; }; done
     just --list >/dev/null
     ruff check .
     ruff format --check .
@@ -140,6 +140,7 @@ quality: corpus-fetch resources-fetch
     python3 finetune/build_dpo_dataset.py --self-test
     workflow-runners
     agents-check
+    docs-lint
 
 # The devkit hooks' contract: fast checks at commit, the full gate at push.
 precommit:
