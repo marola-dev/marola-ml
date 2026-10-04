@@ -9,7 +9,7 @@ The default model is deliberately non-Llama (SmolLM2, Apache-2.0): the bootstrap
 a model. Point MAROLA_DSPY_MODEL at the model marola will actually run; against a paid endpoint the
 bootstrap calls cost real money.
 
-Usage (see dspy/README.md):
+Usage (see docs/3-development_prompt-compile.md):
     pip install -r requirements.txt
     python compile_recommendation_prompt.py              # local Ollama by default
     MAROLA_DSPY_MODEL=<litellm-model-id> python ...      # any LiteLLM provider, with its own env keys

@@ -106,7 +106,7 @@ benchmark model="marola-llama3.2": resources-fetch
 benchmark-gate tolerance="0.05": resources-fetch
     python3 scripts/benchmark_gate.py check --new data --kept docs/benchmarks --questions .tmp/resources/benchmark_questions.json --tolerance {{ tolerance }}
 
-# DSPy compile into .tmp/compiled (an LLM in the loop: see dspy/README.md for the cost).
+# DSPy compile into .tmp/compiled (an LLM in the loop: see docs/3-development_prompt-compile.md for the cost).
 compile-prompt *args:
     python3 dspy/compile_recommendation_prompt.py --out .tmp/compiled {{ args }}
 
@@ -118,7 +118,7 @@ api-docs out=".tmp/api-docs":
 quality: corpus-fetch resources-fetch
     #!/usr/bin/env bash
     set -euo pipefail
-    for tool in ruff shellcheck actionlint hadolint agents-check workflow-runners; do command -v "$tool" >/dev/null || { echo "quality: $tool not installed — run inside 'nix develop'" >&2; exit 1; }; done
+    for tool in ruff shellcheck actionlint hadolint agents-check workflow-runners docs-lint; do command -v "$tool" >/dev/null || { echo "quality: $tool not installed — run inside 'nix develop'" >&2; exit 1; }; done
     just --list >/dev/null
     ruff check .
     ruff format --check .
@@ -140,6 +140,7 @@ quality: corpus-fetch resources-fetch
     python3 finetune/build_dpo_dataset.py --self-test
     workflow-runners
     agents-check
+    docs-lint
 
 # The devkit hooks' contract: fast checks at commit, the full gate at push.
 precommit:

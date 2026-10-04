@@ -1,4 +1,4 @@
-"""DPO fine-tune on top of marola's SFT adapter — Layer 3 in README.md (MIP-0025 §4.3).
+"""DPO fine-tune on top of marola's SFT adapter — Layer 3 in docs/3-development_finetune.md (MIP-0025 §4.3).
 
 Continues training from an SFT LoRA adapter (train_lora.py's output) using the preference pairs
 build_dpo_dataset.py wrote (finetune/data/dpo_pairs.jsonl: {"prompt", "chosen", "rejected"}, one
@@ -6,7 +6,7 @@ pair per real Reviewer.scala reject/revise decision). Same preset ladder and the
 `out/<preset>/` layout as train_lora.py; an adapter trained on a different base is refused before
 anything loads, rather than after the base weights are in RAM.
 
-STATUS: written against the documented peft/trl DPOTrainer API. See finetune/README.md's Layer 3
+STATUS: written against the documented peft/trl DPOTrainer API. See docs/3-development_finetune.md's Layer 3
 section for whether a real run's evidence has landed yet.
 
 Usage:
