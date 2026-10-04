@@ -48,6 +48,16 @@ tarball (`resources.version`) and the corpus (`corpus.version`). `just corpus-fe
 a PR; marola-sea publishes to Hugging Face. The full table, with what pins each, is in
 [AGENTS.md](https://github.com/marola-dev/marola-ml/blob/main/AGENTS.md#what-it-consumes-and-produces-mip-0070-54).
 
+## Gemini review
+
+Request the reviewer `marola-dev/gemini` on a pull request (sidebar → Reviewers, or
+`gh pr edit <N> --add-reviewer marola-dev/gemini`). `marola-gemini-bot` posts one review with at
+most 10 inline comments tagged `[high]`/`[medium]`/`[low]`, then pushes one commit with the fixes
+it is sure of, after `python3 -m compileall -q finetune scripts dspy` passes. Request it again after new commits for a fresh review. It runs only when
+asked, skips pull requests from forks and never edits `.github/`. `.github/workflows/gemini.yml`
+calls the devkit's [`gemini-review`](https://github.com/marola-dev/marola-devkit/blob/main/docs/4-reference_workflows.md#gemini-review)
+workflow.
+
 ## Docs
 
 [docs/3-development_benchmark-gate.md](docs/3-development_benchmark-gate.md) and
