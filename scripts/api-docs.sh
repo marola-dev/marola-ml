@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # api-docs — pdoc over finetune/ and scripts/, raw pages for the devkit's api-docs.yml (MIP-0074
-# §5.2). Fails on a third-party <script src>. The tarball mode release.yml called was retired at
-# MIP-0074 task 36; the umbrella reads the api-docs branch instead.
+# §5.2). Fails on no output or a third-party <script src>.
 #
 #   scripts/api-docs.sh --dir <out> # <out>/python/, raw pages (the devkit api-docs.yml caller)
 #   scripts/api-docs.sh --self-test
@@ -43,6 +42,7 @@ dir="$2"; mkdir -p "$dir"
 case "$STUB" in
   clean) echo '<html><script>local()</script></html>' >"$dir/index.html"; echo m >"$dir/build_dataset.html" ;;
   external) echo '<html><script src="https://cdn.example/x.js"></script></html>' >"$dir/index.html" ;;
+  empty) : ;;
 esac
 EOF
   } >"$t/pdoc"
@@ -53,8 +53,8 @@ EOF
   [ ! -e "$t/dirok/python/gone.html" ] || { echo "FAIL: --dir kept a stale page"; f=1; }
   [ -f "$t/dirok/python/index.html" ] && [ -f "$t/dirok/python/build_dataset.html" ] \
     || { echo "FAIL: --dir did not write the pages under python/"; f=1; }
-  [ ! -e "$t/dirok/python/api-docs.tar.gz" ] || { echo "FAIL: --dir produced a tarball"; f=1; }
   if STUB=external build_dir "$t/dirext" 2>/dev/null; then echo "FAIL: --dir allowed a third-party script"; f=1; fi
+  if STUB=empty build_dir "$t/dirempty" 2>/dev/null; then echo "FAIL: --dir allowed an empty pdoc run"; f=1; fi
   echo "api-docs self-test:" "$([ "$f" -eq 0 ] && echo ok || echo FAILED)"
   [ "$f" -eq 0 ]
 }
