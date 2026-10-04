@@ -52,7 +52,7 @@ and `marola-sea-publish.yml` uses nixpkgs' `llama-cpp` source.
 | hadolint | `2.14.0` in CI | `ci.yml`'s `static` job, on `Dockerfile.local` |
 | shellcheck, actionlint | the devkit's static-ci defaults | `ci.yml`'s `static` job |
 | docs-lint | the devkit's, `v0.4.1` | `just quality`, and `ci.yml`'s `static` job |
-| pdoc | `16.0.0` in `release.yml`; nixpkgs' in `nix develop` | `just api-docs` |
+| pdoc | nixpkgs', via `nix develop` (`api-docs.yml` and locally) | `just api-docs` |
 | CUDA venv helpers | `labs/cuda` flake input (`setup-ml-venv`, `setup-cuda-cache`, `python-cuda`) | `flake.nix`, x86_64-linux only |
 
 Locally, `nix develop` provides the lint tools and the devkit's tools at the flake's versions. The
