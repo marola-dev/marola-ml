@@ -4,7 +4,8 @@ How this repo is built, checked, run and published. How every marola repo review
 ships is the umbrella's [dev flow](https://docs.marola.dev/3-Ways-of-working/DEV-FLOW/) and
 [CI/CD](https://docs.marola.dev/3-Ways-of-working/CI-CD/); this page is what differs here. Each
 job has its own page: [the prompt compile](3-development_prompt-compile.md),
-[the fine-tune](3-development_finetune.md), [the benchmark gate](3-development_benchmark-gate.md).
+[the fine-tune](3-development_finetune.md), [the benchmark gate](3-development_benchmark-gate.md),
+[external evaluation](3-development_external-eval.md).
 
 ## Environment
 

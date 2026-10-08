@@ -67,6 +67,8 @@ workflow.
 - [The prompt compile](docs/3-development_prompt-compile.md),
   [the fine-tune](docs/3-development_finetune.md),
   [the benchmark gate](docs/3-development_benchmark-gate.md): each job, how to run it.
+- [External evaluation](docs/3-development_external-eval.md): the models and benchmarks marola asks
+  an evaluation provider to run, and the terms every provider is held to.
 - [API docs](https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/): pdoc of `finetune/` and
   `scripts/`, from the `api-docs` branch `api-docs.yml` rewrites on each push to main.
 - [AGENTS.md](AGENTS.md): the rules for agents working here.
