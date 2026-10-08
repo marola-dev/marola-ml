@@ -51,10 +51,10 @@ usual leaderboard setting passed as `--num_fewshot` where the config sets none (
 | Portuguese | `oab_exams` (*pt fork*) | 3 | acc | | Brazilian bar exam, long pt-BR prompts |
 | Portuguese | `assin2_rte` (*pt fork*) | 15 | F1 macro | | entailment in pt-BR |
 | Portuguese | `faquad_nli` (*pt fork*) | 15 | F1 macro | | whether a pt-BR passage answers a question |
-| Domain | `marola_ocean` | 0 | keyword coverage | 22 | marola's own job; a custom task, exported per MIP-0081 task 4 |
+| Domain | `marola_ocean` | 0 | keyword coverage | 22 | marola's own job; a custom task, exported per MIP-0081 task 4 ([#29](https://github.com/marola-dev/marola-ml/issues/29)) |
 
 Tier A is 5 models × the 14 tasks above `marola_ocean`: 70 model-task runs. `marola_ocean` joins
-once it exists as a harness task.
+once it exists as a harness task. The work behind this page is tracked in [#26](https://github.com/marola-dev/marola-ml/issues/26)–[#30](https://github.com/marola-dev/marola-ml/issues/30).
 
 ## Questions for the provider
 
