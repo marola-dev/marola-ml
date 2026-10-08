@@ -1,11 +1,11 @@
 # External evaluation
 
-What marola asks an evaluation provider to run, and the terms any provider is held to. This page
-is the document a provider gets for a cost estimate; the design behind it (the backend seam, the
-results store, the reproducibility check) is
+What marola asks an evaluation provider to run, and the terms any provider is held to. A provider
+gets this page to estimate the cost. The design behind it (the backend seam, the results store,
+the reproducibility check) is
 [MIP-0081](https://docs.marola.dev/6-MIPs/MIP-0081-external-llm-evaluation/). Until that lands,
-the only numbers marola has are its own: [the benchmark gate](3-development_benchmark-gate.md)'s
-22 ocean questions and the training-time `eval_loss`.
+marola's only numbers are its own: [the benchmark gate](3-development_benchmark-gate.md)'s 22
+ocean questions and the training-time `eval_loss`.
 
 ## Models
 
@@ -23,8 +23,8 @@ fine-tuning.
 | B | Qwen2.5-14B-Instruct | `Qwen/Qwen2.5-14B-Instruct` | 14.77B | bf16 safetensors | `qwen-14b` |
 | B | each marola-sea fine-tune of a tier A base, once published | `h0ffmann/marola-sea-<preset>-GGUF` | | GGUF `Q4_K_M` and `Q8_0` | the fine-tune's delta at that size |
 
-Sizes and repos are `finetune/train_lora.py`'s `PRESETS`. `qwen-27b` is left out: MIP-0048 parks
-it. Only public weights are sent; nothing marola holds privately goes to a provider.
+Sizes and repos are `finetune/train_lora.py`'s `PRESETS`. `qwen-27b` is left out because
+MIP-0048 parks it. Only public weights are sent.
 
 ## Benchmarks
 
@@ -54,7 +54,9 @@ usual leaderboard setting passed as `--num_fewshot` where the config sets none (
 | Domain | `marola_ocean` | 0 | keyword coverage | 22 | marola's own job; a custom task, exported per MIP-0081 task 4 ([#29](https://github.com/marola-dev/marola-ml/issues/29)) |
 
 Tier A is 5 models × the 14 tasks above `marola_ocean`: 70 model-task runs. `marola_ocean` joins
-once it exists as a harness task. The work behind this page is tracked in [#26](https://github.com/marola-dev/marola-ml/issues/26)–[#30](https://github.com/marola-dev/marola-ml/issues/30).
+once it exists as a harness task. MIP-0081's tasks here are
+[#26](https://github.com/marola-dev/marola-ml/issues/26) to
+[#30](https://github.com/marola-dev/marola-ml/issues/30).
 
 ## Questions for the provider
 
@@ -73,7 +75,8 @@ once it exists as a harness task. The work behind this page is tracked in [#26](
 - **Exportable**: raw per-sample outputs come back as files marola keeps in this repo; a score
   that lives only on a provider's dashboard is not published.
 - **Checked**: before a provider's numbers are published, one task re-run here on `tiny` must
-  match its score within the reported stderr. A mismatch blocks publishing, not the partnership.
+  match its score within the reported stderr. A mismatch holds back those numbers; the
+  partnership goes on.
 - **No exclusivity, no claim**: marola may use other providers and runs its own evaluations; the
   provider gets no rights to marola's data, models or results beyond citing them.
 - **Never in the critical path**: a provider's score informs; it never gates `docker-local.yml`
