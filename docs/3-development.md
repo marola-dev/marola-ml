@@ -61,7 +61,7 @@ not fit.
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
 | `marola-sea-publish.yml` | dispatch | train, merge, publish to Hugging Face, tag ([publishing](#publishing-marola-sea)) |
-| `notify-umbrella.yml` | push to main touching `README.md` or `docs/` | ask the umbrella to rebuild docs.marola.dev |
+| `notify-umbrella.yml` | push to main | ask the umbrella to move its pointer, and to rebuild docs.marola.dev when `README.md` or `docs/` changed |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
 `ci.yml`'s static job clones the devkit at `v0.4.1` to run docs-lint, which static-ci has no input
