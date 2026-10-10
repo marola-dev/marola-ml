@@ -12,8 +12,8 @@ permissions: {}
 
 jobs:
   api-docs:
-    uses: marola-dev/marola-devkit/.github/workflows/api-docs.yml@v0.8.0
+    uses: marola-dev/marola-devkit/.github/workflows/api-docs.yml@v0.8.1
     permissions:
       contents: write
     with:
-      devkit-ref: v0.8.0
+      devkit-ref: v0.8.1
