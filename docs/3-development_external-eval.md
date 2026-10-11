@@ -83,8 +83,8 @@ once it exists as a harness task. MIP-0081's tasks here are
   or a model publish.
 - **Credit**: a provider that runs evaluations at no cost to marola is credited on marola.dev's
   partners page, in the model card next to each score it produced, and in the results file.
-- **Cost**: every run is started by a person, its cost or credit is recorded in the commit's
-  `Cost:` line, and a provider's API key lives in a repository secret or a local environment
-  variable, never in a file.
+- **Cost**: every run is started by a person, its cost or credit is noted in the commit message,
+  and a provider's API key lives in a repository secret or a local environment variable, never
+  in a file.
 </content>
 </invoke>

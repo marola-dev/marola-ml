@@ -87,7 +87,7 @@ This repo is where marola's money and irreversible steps are
 | `just quality`, the self-tests, `just finetune-dataset` | free, seconds | anyone, an agent included |
 | `just compile-prompt` on Ollama; `compile-prompt.yml` | free (a local model) | a person dispatches the workflow; locally, anyone |
 | `just compile-prompt` on a paid model | cents to dollars | only after a human's go-ahead |
-| `just benchmark`, `just finetune-train preset=tiny` | local compute, minutes | anyone; an agent's run counts toward the feature's `Cost:` |
+| `just benchmark`, `just finetune-train preset=tiny` | local compute, minutes | anyone, an agent included |
 | `marola-sea-publish.yml`, `just finetune-publish` | hours of training; an upload that cannot be taken back | a person, by hand |
 
 An agent dispatches no workflow and creates no tag or release: `.claude/settings.json` denies

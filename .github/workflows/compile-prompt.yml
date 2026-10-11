@@ -94,7 +94,6 @@ jobs:
           Re-run \`just benchmark\` against this branch before merging.
 
           Tested: compile_recommendation_prompt.py on ollama_chat/$MODEL in the run above; both files parse as JSON
-          Cost: \$0 · a local Ollama model in a hosted runner
           MSG
           git push -q origin "$BRANCH"
           gh pr create --repo "$APP_REPO" --base main --head "$BRANCH" \
