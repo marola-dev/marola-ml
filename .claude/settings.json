@@ -23,7 +23,6 @@
       "Bash(just resources-fetch*)",
       "Bash(just benchmark-gate*)",
       "Bash(uprd:*)",
-      "Bash(cost-split:*)",
       "Bash(scripts/corpus-fetch.sh*)",
       "Bash(scripts/resources-fetch.sh*)",
       "Bash(git status*)",
