@@ -56,8 +56,7 @@ not fit.
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `ci.yml` | every PR, push to main | the devkit's static-ci (actionlint, hadolint, shellcheck, docs-lint), python-ci (ruff and every `--self-test`), the runner guard, agents-check |
-| `api-docs.yml` | every PR, push to main | `just api-docs` as a check; on main, the output goes to the `api-docs` branch |
+| `ci.yml` | every PR, push to main | the devkit's static-ci (actionlint, hadolint, shellcheck, docs-lint), python-ci (ruff and every `--self-test`), the runner guard, agents-check, and the `api-docs` job (`just api-docs` as a check; on main, the output goes to the `api-docs` branch) |
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
 | `marola-sea-publish.yml` | dispatch | train, merge, publish to Hugging Face, tag ([publishing](#publishing-marola-sea)) |
@@ -122,6 +121,6 @@ is on [the fine-tune page](3-development_finetune.md#publishing-to-hugging-face-
 
 ## API docs
 
-The API docs readers see come from the `api-docs` branch, which `api-docs.yml` rewrites on each
+The API docs readers see come from the `api-docs` branch, which `ci.yml`'s `api-docs` job rewrites on each
 push to main. The README and `docs/` are this repo's pages on docs.marola.dev; `docs/benchmarks/`
 stays off the site, and links to it become GitHub links.
