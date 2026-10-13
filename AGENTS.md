@@ -44,7 +44,7 @@ fine-tune (marola-sea), and the benchmark gate with its kept runs.
 | corpus → ml | `marola-corpus-<tag>.tar.gz` | `corpus.version`; `just corpus-fetch` unpacks it into `.tmp/knowledge` |
 | ml → app | The compiled prompts, as a PR to the app's `core/src/main/resources/` (`compile-prompt.yml`) | The files in the app |
 | ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marola-sea on Hugging Face (`marola-sea-publish.yml`) | Image tag; model repo |
-| ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); pdoc of `finetune/` and `scripts/` on the `api-docs` branch (`api-docs.yml`) | Pulled by the aggregator |
+| ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); pdoc of `finetune/` and `scripts/` on the `api-docs` branch (`ci.yml`'s `api-docs` job) | Pulled by the aggregator |
 
 No workflow here builds the app or reads its tree. Bump `marola-image` and `resources.version`
 together: the gate fails a run whose question ids differ from the pinned question set.
@@ -57,7 +57,7 @@ just quality                 # every gate CI runs (fetches the pinned corpus and
 just finetune-dataset        # finetune/data/{train,eval}.jsonl
 just benchmark               # the pinned app image's --benchmark on the local Ollama, then the gate
 just compile-prompt          # DSPy into .tmp/compiled (costs LLM calls; see docs/3-development_prompt-compile.md)
-just api-docs                # <out>/python/ pdoc, as api-docs.yml's CI check runs it
+just api-docs                # <out>/python/ pdoc, as `ci.yml`'s `api-docs` job runs it
 ```
 
 The app's own recipes (`just run`, `just e2e`, `just ask`) run in an app checkout.
@@ -69,7 +69,7 @@ links. There is no `docs/index.md`. `docs/` holds numbered pages, not directorie
 `1-design` (the three jobs, the module map), `2-libraries`, `3-development` (environment, GPU, the
 self-hosted runner, CI, secrets, cost, publishing, pins) with `_prompt-compile`, `_finetune` and
 `_benchmark-gate` beside it. The H1 is the nav label. `docs/benchmarks/` is the gate's kept record,
-off the site. pdoc output is never committed: `api-docs.yml` writes it to the `api-docs` branch,
+off the site. pdoc output is never committed: `ci.yml`'s `api-docs` job writes it to the `api-docs` branch,
 and the README links it at https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/ (a
 relative `api-docs/python/` from the README is a path outside `docs/`, which the docs build
 refuses); a `docs/` page may link it relatively. A decision that starts and ends here is an ADR at

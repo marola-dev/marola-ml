@@ -70,5 +70,5 @@ workflow.
 - [External evaluation](docs/3-development_external-eval.md): the models and benchmarks marola asks
   an evaluation provider to run, and the terms every provider is held to.
 - [API docs](https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/): pdoc of `finetune/` and
-  `scripts/`, from the `api-docs` branch `api-docs.yml` rewrites on each push to main.
+  `scripts/`, from the `api-docs` branch `ci.yml`'s `api-docs` job rewrites on each push to main.
 - [AGENTS.md](AGENTS.md): the rules for agents working here.
