@@ -8,6 +8,11 @@ answers a question.
 It is one of the marola repos under the [umbrella](https://github.com/marola-dev/marola)
 (MIP-0070), and its history before the split is marola's, filtered to these files.
 
+**marola-sea is now built from [karpathy/nanoGPT](https://github.com/karpathy/nanoGPT), copied
+as is into [`sea/`](sea/README.md)**: a GPT that marola trains from random weights on its own
+corpus ([ADR 0001](docs/adr/0001-marola-sea-from-nanogpt.md)). The fork notice at the end of this
+page tells the history.
+
 **Status:** the prompt compile (`compile-prompt.yml`, dispatched by hand) and the benchmark gate
 (`docker-local.yml`, on a push to main touching the model or the gate) run in CI. marola-sea has
 trained only at the `tiny` preset; its publish waits on the HF_TOKEN secret and the marola-sea
@@ -24,6 +29,9 @@ just benchmark          # the pinned app image's --benchmark on your Ollama, the
 
 ## Repo map
 
+- [`sea/`](sea/README.md): marola-sea. nanoGPT copied as is into `sea/nanogpt/` (MIT, Andrej
+  Karpathy), with marola's corpus dataset and training settings beside it (`just sea-prepare`,
+  `just sea-train`, `just sea-sample`).
 - [`dspy/`](https://github.com/marola-dev/marola-ml/tree/main/dspy): the prompt compile. The
   `compile prompt` workflow runs it on an Ollama model inside the job and opens a PR in the app
   with the two compiled files ([how to run it](docs/3-development_prompt-compile.md)).
@@ -72,3 +80,24 @@ workflow.
 - [API docs](https://docs.marola.dev/5-Repos/marola-ml/api-docs/python/): pdoc of `finetune/` and
   `scripts/`, from the `api-docs` branch `ci.yml`'s `api-docs` job rewrites on each push to main.
 - [AGENTS.md](AGENTS.md): the rules for agents working here.
+
+## Fork notice
+
+This repository's history has three parts.
+
+1. **Marola's.** marola-ml was split out of the [umbrella](https://github.com/marola-dev/marola)
+   (MIP-0070), with marola's history filtered to these files: the prompt compile, the benchmark
+   gate, and a marola-sea fine-tuned from Llama 3.2 (`finetune/`).
+2. **The fork of nanoGPT, 14 October 2026.** The code of
+   [karpathy/nanoGPT](https://github.com/karpathy/nanoGPT) at commit
+   `3adf61e154c3fe3fca428ad6bc3818b27a3b8291` was copied as is into `sea/nanogpt/`, under its MIT
+   License (Copyright (c) 2022 Andrej Karpathy, kept in `sea/nanogpt/LICENSE`). Every copied file
+   says so in its first lines, and [`sea/FORK.tsv`](sea/FORK.tsv) records what each was upstream.
+   From that day marola-sea is built only from it.
+3. **Marola's again, on top.** Every change marola makes to `sea/` after the fork is marola's, and
+   the weights it trains are marola's. The code that came from nanoGPT stays Andrej Karpathy's
+   under MIT, and its notice stays with it.
+
+The idea of starting from a small GPT trained from scratch came from Fabio Akita's
+[microgpt](https://github.com/akitaonrails/microgpt); none of its code is here, because it had no
+licence on the day of the fork (marola-ml#48).

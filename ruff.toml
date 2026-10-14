@@ -2,7 +2,9 @@
 target-version = "py312"
 line-length = 100
 # Nested checkouts (agent worktrees, .tmp/wt-*) are full repo copies ruff would otherwise walk.
-extend-exclude = [".claude/worktrees", ".tmp"]
+# sea/nanogpt is karpathy/nanoGPT copied as is (sea/FORK.tsv): it keeps its own style, and
+# sea/fork_check.py, not ruff, checks it. marola's own code in sea/ is linted as everywhere else.
+extend-exclude = [".claude/worktrees", ".tmp", "sea/nanogpt"]
 [lint]
 select = ["E", "F", "W", "I", "UP", "B"]
 ignore = ["E501"]

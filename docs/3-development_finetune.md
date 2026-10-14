@@ -1,5 +1,10 @@
 # Fine-tuning (marola-sea)
 
+> **Superseded for marola-sea (2026-10-14).** marola-sea is now built only from nanoGPT, in
+> [`sea/`](../sea/README.md) ([ADR 0001](adr/0001-marola-sea-from-nanogpt.md)). This page describes
+> the Llama 3.2 path, which still makes the `marola-llama3.2` model the app uses until an umbrella
+> MIP decides its end.
+
 Two tiers, honestly labelled. Both produce a model named `marola-llama3.2` that the Scala side
 uses with nothing more than `MAROLA_LOCAL_LLM_MODEL=marola-llama3.2`, no code change.
 

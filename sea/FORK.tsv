@@ -1,0 +1,30 @@
+# The files of karpathy/nanoGPT copied into sea/nanogpt, one row each (sea/fork_check.py reads it).
+# Forked on 2026-10-14 from karpathy/nanoGPT at commit 3adf61e154c3fe3fca428ad6bc3818b27a3b8291
+# (MIT License, Copyright (c) 2022 Andrej Karpathy; sea/nanogpt/LICENSE).
+# path: under sea/nanogpt, as upstream names it
+# upstream_sha256: the sha256 of the file at that commit, before marola's provenance header
+# state: as-is   the file below its header is the upstream file, byte for byte (checked)
+#        edited  marola changed it; the header stays, and the change is in git history
+# Not copied: assets/ (two pictures), scaling_laws.ipynb, transformer_sizing.ipynb, .gitattributes,
+# .gitignore: none is needed to train or sample.
+path	upstream_sha256	state
+LICENSE	a59ec5cdb1c1e447e5266a014b3e7ded511f8d6e5a08931e931c87490ff821fe	as-is
+README.md	8d969370683849a2cc4e46c81bf2449717f2daff657586888151933c3590f85f	as-is
+bench.py	984f54a60df9d1aa844e7e0aef10000e7090a00109d13e43587ccb077ef340bb	as-is
+config/eval_gpt2.py	054665ef6b977e5a03fa94f4365206d5258305f8660589c5b534949d946418e8	as-is
+config/eval_gpt2_large.py	52f07f35a1c7a45c30f0c59a39ab3804fcefd505bcd69973ff06e19a57e079bc	as-is
+config/eval_gpt2_medium.py	7ced6fb2cbc2c16fbb9c6c256eac403f3e1a88d1317ef0f85a1688f8b7988a2b	as-is
+config/eval_gpt2_xl.py	8bb8d85b53f2daf35d11c403b0a0e0dfbe69cd1d052f38ea09b826fa3ed2ae65	as-is
+config/finetune_shakespeare.py	e78caf73a286e22df3ad069b39ed6162490b8e033ca1e2ceb8477eee159c7948	as-is
+config/train_gpt2.py	0add8a916edf704e001e87aaf63647eea9d6df964c10129ff60ad479bdbd55c4	as-is
+config/train_shakespeare_char.py	9b41cdfb2c917259d796a8184d835221a349c23cd18a0a63b46da431d95d9c05	as-is
+configurator.py	5cc23aca26b4ab3c0d9e5f82740f4781f9444f42718c15abcee70d93c5aabe8f	as-is
+data/openwebtext/prepare.py	77f3ef0cc8132d77f90c2bd5f9c3be86d1b3da7428e100559c58aee2bcb6eb12	as-is
+data/openwebtext/readme.md	e1f86c0641994478162be888a1f120eee2777b758ac2682f9508c8835414d192	as-is
+data/shakespeare/prepare.py	f8d47267f00963138314bb969e75071211bf1140c248bf31b9e60e7750027f06	as-is
+data/shakespeare/readme.md	a4f1406ce0f3b7c61772413ebc651db0e0cf74a8e0e1d3bbdb5ab55238a52760	as-is
+data/shakespeare_char/prepare.py	d5fbea0686d146748cf36017d6c34136a2fe9c41f065f1429529ad55a992c692	as-is
+data/shakespeare_char/readme.md	9bd87853316db1ab5af5b26b2b4551e05f1bc9390fc9bcb52635911a08ec82b6	as-is
+model.py	7c01703240dbec5d554527dc666e35b3df8391d0b117fddc07afcf325a21d11c	as-is
+sample.py	1c4bb3716ec55395be2e6ad136693614b0b38de9defda889041efe2057a0c1f1	as-is
+train.py	413bd97b40bb400a2a0d01230e2946f056c263ebac1b7281c2367d964a123085	as-is
