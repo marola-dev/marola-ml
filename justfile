@@ -111,12 +111,12 @@ analyze-training *args:
         python3 scripts/analyze_training.py "$root/adapter" "$root/dpo-adapter"
     fi
 
-# Download a marola-sea publish run's logs (default: the latest) into .tmp/training-logs/.
+# Download a marola-gpt publish run's logs (default: the latest) into .tmp/training-logs/.
 training-logs run_id="":
     #!/usr/bin/env bash
     set -euo pipefail
     id="{{ run_id }}"
-    [ -n "$id" ] || id="$(gh run list --workflow "marola-sea publish" --limit 1 --json databaseId --jq '.[0].databaseId')"
+    [ -n "$id" ] || id="$(gh run list --workflow "marola-gpt publish" --limit 1 --json databaseId --jq '.[0].databaseId')"
     mkdir -p .tmp/training-logs
     gh run download "$id" --dir .tmp/training-logs
     echo "training-logs: run $id in .tmp/training-logs — analyse with: just analyze-training .tmp/training-logs/*/"

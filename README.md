@@ -54,7 +54,8 @@ just marolagpt 0.1.0                   # all of it, ending in the dry run
 
 The upload cannot be taken back, so it is a dry run unless `--yes` is given, and it refuses a
 release whose files do not match their checksums. In CI it is
-[`marolagpt-publish.yml`](.github/workflows/marolagpt-publish.yml): dispatched by hand only, on a
+[`marola-gpt-publish.yml`](.github/workflows/marola-gpt-publish.yml), the repository's one publish
+workflow: dispatched by hand only, on a
 GitHub-hosted runner, a dry run by default, with the `HF_TOKEN` secret only when it uploads. An
 agent never dispatches it.
 
@@ -91,7 +92,8 @@ question.
   ([the gate's doc](docs/3-development_benchmark-gate.md)).
 - `Dockerfile.local`: Ollama with `marola-llama3.2` already in its store, published as
   `ghcr.io/marola-dev/marola-ml:local` once it clears the gate (`docker-local.yml`).
-- `marola-sea-publish.yml`: the Llama path's publish, by hand only, on the self-hosted runner.
+- The Llama path has no publish workflow any more: `marola-sea-publish.yml` was replaced by
+  `marola-gpt-publish.yml` on 14 October 2026. `just finetune-publish` still uploads by hand.
 
 ```bash
 nix develop

@@ -32,7 +32,7 @@ All three tracing packages install unconditionally; tracing is opted into at run
 | gguf, sentencepiece, protobuf | `>=0.19.0`, `>=0.2.2`, `>=7.36.2` | llama.cpp's `convert_hf_to_gguf.py`, which `merge_export.py` shells out to; sentencepiece even for a model without its tokenizer (the file's comment says why) |
 
 llama.cpp itself is not a Python dependency: `merge_export.py --llama-cpp <dir>` takes a checkout,
-and `marola-sea-publish.yml` uses nixpkgs' `llama-cpp` source.
+such as nixpkgs' `llama-cpp` source, which the removed `marola-sea-publish.yml` used.
 
 ## Models and serving
 

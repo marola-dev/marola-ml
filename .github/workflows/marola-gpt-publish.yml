@@ -1,4 +1,5 @@
-# marolaGPT publish — the whole chain on a GitHub-hosted runner, by hand only: the pinned
+# marola-gpt-publish — the one publish workflow of marola-ml (it replaced marola-sea-publish.yml on
+# 14 October 2026, the owner's choice): the whole chain on a GitHub-hosted runner, by hand only: the pinned
 # marola-corpus, the dataset, training from random weights on the CPU, the release directory, then
 # the upload to huggingface.co/h0ffmann/marolaGPT (private; the owner's account for now, 14 October
 # 2026). An upload cannot be taken back, so `dry_run` is on by default: the job then builds and
@@ -6,7 +7,7 @@
 # HF_TOKEN secret (a fine-grained token with write access to that repository) only when dry_run is
 # off. docs/adr/0002 has the licence the release carries. The release is not kept as a workflow
 # artifact: on a public repository any GitHub user could download it, which the licence forbids.
-name: marolaGPT publish
+name: marola-gpt publish
 
 on:
   workflow_dispatch:
@@ -26,7 +27,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: marolagpt-publish
+  group: marola-gpt-publish
   cancel-in-progress: false
 
 jobs:

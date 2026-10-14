@@ -42,7 +42,7 @@ for a GPU node; nanoGPT is one small GPT that trains on a CPU, which is where ma
   change and distribute it, and requires its notice in every copy. An edit does not move that
   copyright; it adds marola's on top.
 - `ruff` skips `sea/nanogpt/`: a copy as is keeps its own style, and `fork_check.py` guards it.
-- The Llama path (`finetune/`, `marola-sea-publish.yml`, the Ollama model `marola-llama3.2` the
+- The Llama path (`finetune/`, its publish workflow (removed in ADR 0002), the Ollama model `marola-llama3.2` the
   app uses) still exists. Whether it is removed, and what the app runs until marola-sea from
   nanoGPT can replace it, is the umbrella MIP's to decide; nothing else in the app changes here.
 - The first run is a start, not a model: 15 080 characters of corpus, a 0.80M-parameter GPT,

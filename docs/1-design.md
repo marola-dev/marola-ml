@@ -7,7 +7,7 @@ produces those prompts and that model, and decides whether a model is good enoug
 | Job | Code | Produces | Runs when |
 |---|---|---|---|
 | The prompt compile | `dspy/compile_recommendation_prompt.py` | `recommendation_prompt.json`, `review_prompt.json`, as a PR to marola-app | by hand: `just compile-prompt` or a `compile-prompt.yml` dispatch |
-| The fine-tune | `finetune/` | Tier 1: `marola-llama3.2`, an Ollama Modelfile, no weights changed. Tier 2: marola-sea, a QLoRA + DPO model published to Hugging Face | Tier 1: `just finetune-model`, and every `Dockerfile.local` build; Tier 2: by hand, a `marola-sea-publish.yml` dispatch |
+| The fine-tune | `finetune/` | Tier 1: `marola-llama3.2`, an Ollama Modelfile, no weights changed. Tier 2: marola-sea, a QLoRA + DPO model, uploaded by hand (`just finetune-publish`); marola's own model is now marolaGPT, in `sea/` | Tier 1: `just finetune-model`, and every `Dockerfile.local` build; Tier 2: by hand, a `marola-sea-publish.yml` dispatch |
 | The benchmark gate | `scripts/benchmark.sh`, `scripts/benchmark_gate.py`, `docs/benchmarks/` | the decision to move `ghcr.io/marola-dev/marola-ml:local` | `docker-local.yml`, on a push to main touching the model, the pins or the gate |
 
 ```mermaid
@@ -46,9 +46,9 @@ flowchart LR
   dataset builder or the gate reads its input after fetching it and fails on an empty one.
 - **One run directory per base model.** Training writes under `finetune/out/<preset>/`, and each
   script refuses an output or an adapter that belongs to another base, before importing torch.
-- **Irreversible steps are a human's.** A Hugging Face upload, from `just finetune-publish` or a
-  dispatched `marola-sea-publish.yml` run (which also tags `marola-sea-v<N>`), is started by a
-  person ([who may run what](3-development.md#cost-and-who-may-run-what)).
+- **Irreversible steps are a human's.** A Hugging Face upload, from `just finetune-publish`,
+  `just marolagpt-publish <version> --yes` or a dispatched `marola-gpt-publish.yml` run with
+  `dry_run` off, is started by a person ([who may run what](3-development.md#cost-and-who-may-run-what)).
 
 ## Module map
 
