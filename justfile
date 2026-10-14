@@ -60,6 +60,21 @@ finetune-publish repo gguf base *args:
 
 # Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv; call its
 # bin/python-cuda afterwards, never bin/python.
+# marola-sea is built from karpathy/nanoGPT copied into sea/nanogpt (docs/adr/0001). SEA_PYTHON is
+# a Python with sea/requirements.txt installed (default python3).
+
+# marola-sea: the pinned corpus notes as a character-level dataset for nanoGPT.
+sea-prepare: corpus-fetch
+    ${SEA_PYTHON:-python3} sea/prepare_corpus.py
+
+# marola-sea: train the GPT from random weights (sea/config/train_marola_sea.py; --key=value overrides).
+sea-train *args="":
+    cd sea/nanogpt && ${SEA_PYTHON:-python3} train.py ../config/train_marola_sea.py {{ args }}
+
+# marola-sea: sample text from the best checkpoint.
+sea-sample *args="":
+    cd sea/nanogpt && ${SEA_PYTHON:-python3} sample.py --out_dir=out-marola-sea --device=cpu --num_samples=1 --max_new_tokens=300 {{ args }}
+
 ml-venv *args:
     REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{ args }}
 
@@ -138,6 +153,9 @@ quality: corpus-fetch resources-fetch
     python3 finetune/merge_export.py --self-test
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
+    python3 sea/prepare_corpus.py --self-test
+    python3 sea/fork_check.py --self-test
+    python3 sea/fork_check.py
     workflow-runners
     agents-check
     docs-lint

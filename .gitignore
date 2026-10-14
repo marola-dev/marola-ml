@@ -12,3 +12,6 @@ dspy/.venv/
 !/finetune/data/.gitkeep
 /finetune/out/*
 !/finetune/out/.gitkeep
+# marola-sea's dataset and checkpoints (`just sea-prepare`, `just sea-train`)
+/sea/nanogpt/data/marola_corpus/
+/sea/nanogpt/out-*/
