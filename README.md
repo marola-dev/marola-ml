@@ -37,27 +37,63 @@ owner's account for now (14 October 2026), created private, and in this reposito
 
 ## From the corpus to Hugging Face
 
-One command per step, and one for the whole chain. They need Nix, `just`, and a Python with
+The chain has five steps: the pinned corpus, the dataset, training from random weights, the
+release directory, the upload to `h0ffmann/marolaGPT`. It reaches Hugging Face in two ways, and
+**never on a merge**:
+
+| Way | You run | What publishes |
+|---|---|---|
+| [By tag](#release-by-tag-just-sea-release) (CD) | `just sea-release` | `marola-gpt-publish.yml`, on the pushed tag `marolagpt-vX.Y.Z` |
+| [By hand](#manual-hugging-face-release) | `just marolagpt-publish <v> --yes` on your machine | your own `--yes` |
+
+An upload cannot be taken back. Both ways refuse a release whose files do not match their
+checksums, and an agent starts neither: no tag, no dispatch, no `--yes`.
+
+### Release by tag: `just sea-release`
+
+The pattern that publishes is a tag `marolagpt-vX.Y.Z` on a commit of main. `just sea-release`
+makes it: it takes the highest `marolagpt-v*` tag and increments it (the first is `0.1.0`), checks
+that main is clean, level with origin, and green in CI, then tags and pushes. The tag starts
+[`marola-gpt-publish.yml`](.github/workflows/marola-gpt-publish.yml) on a GitHub-hosted runner,
+which trains marolaGPT from the pinned corpus, packages it and uploads it to `h0ffmann/marolaGPT`,
+tagged `vX.Y.Z` there. It needs the `HF_TOKEN` secret, a fine-grained Hugging Face token with write
+access to that repository.
+
+```bash
+git switch main && git pull
+just sea-release --dry-run             # every check, and the tag it would push; pushes nothing
+just sea-release                       # the next patch: marolagpt-v0.1.0, then 0.1.1, ...
+just sea-release minor                 # or major, or an exact version: just sea-release 0.3.0
+gh run list --workflow marola-gpt-publish.yml --limit 1    # follow the publish
+```
+
+A tag that is not on main is refused by the workflow. Merges, however many, publish nothing until
+the next tag.
+
+### Manual Hugging Face release
+
+To build and upload from your own machine, logged in to Hugging Face as `h0ffmann`
+(`huggingface-cli login`, or `HF_TOKEN` in the environment). It needs Nix, `just`, and a Python with
 [`sea/requirements.txt`](sea/requirements.txt) installed, named by `SEA_PYTHON`.
 
 ```bash
 nix develop
 export SEA_PYTHON=/path/to/python      # torch (CPU: download.pytorch.org/whl/cpu), numpy, tiktoken, huggingface_hub
 
-just marolagpt-prepare                 # marola-corpus at its pin -> sea/nanogpt/data/marola_corpus/
-just marolagpt-train                   # nanoGPT from random weights (sea/config/train_marolagpt.py)
-just marolagpt-sample                  # text from the best checkpoint
-just marolagpt-package 0.1.0           # sea/release/marolaGPT-0.1.0/: weights, vocabulary, card, licence, checksums
-just marolagpt-publish 0.1.0           # a dry run; add --yes to upload to h0ffmann/marolaGPT
-just marolagpt 0.1.0                   # all of it, ending in the dry run
+just marolagpt-prepare                 # 1. marola-corpus at its pin -> sea/nanogpt/data/marola_corpus/
+just marolagpt-train                   # 2. nanoGPT from random weights (sea/config/train_marolagpt.py)
+just marolagpt-sample                  #    look at what it learned
+just marolagpt-package 0.1.0           # 3. sea/release/marolaGPT-0.1.0/: weights, vocabulary, card, licence, checksums
+just marolagpt-publish 0.1.0           # 4. a dry run: what would go, and where
+just marolagpt-publish 0.1.0 --yes     # 5. the upload to h0ffmann/marolaGPT (created private), tagged v0.1.0
+just marolagpt 0.1.0                   # steps 1 to 4 at once, ending in the dry run
 ```
 
-The upload cannot be taken back, so it is a dry run unless `--yes` is given, and it refuses a
-release whose files do not match their checksums. In CI it is
-[`marola-gpt-publish.yml`](.github/workflows/marola-gpt-publish.yml), the repository's one publish
-workflow: dispatched by hand only, on a
-GitHub-hosted runner, a dry run by default, with the `HF_TOKEN` secret only when it uploads. An
-agent never dispatches it.
+`--key=value` after `just marolagpt-train` overrides a setting, for example
+`just marolagpt-train --max_iters=3000`. Use the same version as a `marolagpt-v*` tag when the
+release should match one, and run it from that tag's checkout so the model card names its commit.
+The workflow can also be run by hand (Actions → "marola-gpt publish"): a dry run unless you untick
+`dry_run`.
 
 <details>
 <summary>What runs where</summary>

@@ -50,7 +50,7 @@ any workflow names `self-hosted`. The devkit's recipes for a runner (`just runne
 | `ci.yml` | every PR, push to main | the devkit's static-ci (actionlint, hadolint, shellcheck, docs-lint), python-ci (ruff and every `--self-test`), the runner guard, agents-check, and the `api-docs` job (`just api-docs` as a check; on main, the output goes to the `api-docs` branch) |
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
-| `marola-gpt-publish.yml` | dispatch | marolaGPT: the corpus, training on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marolaGPT` (a dry run by default; no artifact kept) ([publishing](#publishing-marolagpt)) |
+| `marola-gpt-publish.yml` | a pushed `marolagpt-v*` tag on main (`just sea-release`); dispatch | marolaGPT: the corpus, training on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marolaGPT` (a dry run by default; no artifact kept) ([publishing](#publishing-marolagpt)) |
 | `notify-umbrella.yml` | push to main | ask the umbrella to move its pointer, and to rebuild docs.marola.dev when `README.md` or `docs/` changed |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
@@ -81,17 +81,21 @@ This repo is where marola's money and irreversible steps are
 | `just benchmark`, `just finetune-train preset=tiny` | local compute, minutes | anyone, an agent included |
 | `just marolagpt-prepare`, `-train`, `-sample`, `-package`; `just marolagpt-publish` without `--yes` | local compute, minutes; nothing leaves the machine | anyone, an agent included |
 | `just finetune-publish` | an upload that cannot be taken back | a person, by hand |
-| `marola-gpt-publish.yml` with dry_run off, `just marolagpt-publish <v> --yes` | an upload that cannot be taken back, under the restricted licence | a person, by hand |
+| `just sea-release` (its tag publishes), `marola-gpt-publish.yml` with dry_run off, `just marolagpt-publish <v> --yes` | an upload that cannot be taken back, under the restricted licence | a person, by hand |
 
 An agent dispatches no workflow and creates no tag or release: `.claude/settings.json` denies
 `gh workflow run`, `gh release` and `git tag`.
 
 ## Publishing marolaGPT
 
-`marola-gpt-publish.yml` is marola-ml's one publish workflow. It takes a version (`X.Y.Z`), the
-number of training iterations, and `dry_run` (on by default). On a GitHub-hosted runner it fetches
+`marola-gpt-publish.yml` is marola-ml's one publish workflow, and a merge never starts it. The
+pattern that publishes is a tag `marolagpt-vX.Y.Z` on a commit of main: `just sea-release`
+(`scripts/sea-release.sh`) increments the highest such tag, checks that main is clean, level and
+green in CI, and pushes it; the workflow takes its version from the tag, refuses a tag that is not
+on main, and uploads. By hand it takes a version (`X.Y.Z`), the number of training iterations, and
+`dry_run` (on by default). Either way, on a GitHub-hosted runner it fetches
 the pinned corpus, prepares the dataset, trains marolaGPT from random weights on the CPU, writes the
-release directory (`sea/package.py`) and, only with `dry_run` off and the `HF_TOKEN` secret set,
+release directory (`sea/package.py`) and, on a tag or with `dry_run` off, with the `HF_TOKEN` secret set,
 uploads it to `h0ffmann/marolaGPT` as one commit tagged `v<version>` (`sea/publish_hf.py`, which
 creates the repository private). It keeps no artifact. Locally the same chain is
 `just marolagpt <version>`, and `just marolagpt-publish <version> --yes` uploads.

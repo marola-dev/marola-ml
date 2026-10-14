@@ -1,19 +1,23 @@
 # marola-gpt-publish — the one publish workflow of marola-ml (it replaced marola-sea-publish.yml on
-# 14 October 2026, the owner's choice): the whole chain on a GitHub-hosted runner, by hand only: the pinned
-# marola-corpus, the dataset, training from random weights on the CPU, the release directory, then
-# the upload to huggingface.co/h0ffmann/marolaGPT (private; the owner's account for now, 14 October
-# 2026). An upload cannot be taken back, so `dry_run` is on by default: the job then builds and
-# checks everything and uploads nothing. An agent never dispatches it (AGENTS.md). It needs the
-# HF_TOKEN secret (a fine-grained token with write access to that repository) only when dry_run is
-# off. docs/adr/0002 has the licence the release carries. The release is not kept as a workflow
-# artifact: on a public repository any GitHub user could download it, which the licence forbids.
+# 14 October 2026): the pinned marola-corpus, the dataset, training from random weights on a
+# GitHub-hosted CPU, the release directory, then the upload to huggingface.co/h0ffmann/marolaGPT
+# (private; the owner's account for now). It never runs on a merge. The pattern that publishes is a
+# pushed tag `marolagpt-vX.Y.Z` on a commit of main, which `just sea-release` makes (the owner,
+# 14 October 2026: "I don't want to publish to hugging face on every merge, I need a pattern"). By
+# hand (workflow_dispatch) it is a dry run unless `dry_run` is unticked. An upload cannot be taken
+# back; an agent never pushes the tag or dispatches this (AGENTS.md). HF_TOKEN (a fine-grained token
+# with write access to that repository) is needed only to upload. docs/adr/0002 has the licence the
+# release carries. The release is not kept as a workflow artifact: on a public repository any
+# GitHub user could download it, which the licence forbids.
 name: marola-gpt publish
 
 on:
+  push:
+    tags: ["marolagpt-v*"]
   workflow_dispatch:
     inputs:
       version:
-        description: "the release version, X.Y.Z (tagged v<version> on Hugging Face)"
+        description: "the release version, X.Y.Z (tagged v<version> on Hugging Face); a tag push uses the tag's"
         required: true
       max_iters:
         description: "training iterations (sea/config/train_marolagpt.py's default is 1000)"
@@ -36,12 +40,30 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Check the version
+      # A tag push publishes: its version is the tag's, and it must sit on main. By hand, the inputs.
+      - name: The version, and whether this run uploads
+        id: plan
         env:
-          VERSION: ${{ inputs.version }}
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.ref_name }}
+          IN_VERSION: ${{ inputs.version }}
+          IN_DRY_RUN: ${{ inputs.dry_run }}
+          IN_MAX_ITERS: ${{ inputs.max_iters }}
         run: |
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must be X.Y.Z, not $VERSION"; exit 1; }
+          if [ "$EVENT" = push ]; then
+            version="${TAG#marolagpt-v}" dry_run=false max_iters=1000
+            git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
+              || { echo "::error::$TAG is not on main; only a commit of main is published"; exit 1; }
+          else
+            version="$IN_VERSION" dry_run="$IN_DRY_RUN" max_iters="$IN_MAX_ITERS"
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must be X.Y.Z, not $version"; exit 1; }
+          [[ "$max_iters" =~ ^[0-9]+$ ]] || { echo "::error::max_iters must be a number"; exit 1; }
+          echo "marolaGPT $version: max_iters $max_iters, dry_run $dry_run"
+          { echo "version=$version"; echo "dry_run=$dry_run"; echo "max_iters=$max_iters"; } >> "$GITHUB_OUTPUT"
 
       - name: Python with sea/requirements.txt (torch for the CPU)
         run: |
@@ -56,22 +78,21 @@ jobs:
 
       - name: Train marolaGPT from random weights
         env:
-          MAX_ITERS: ${{ inputs.max_iters }}
+          MAX_ITERS: ${{ steps.plan.outputs.max_iters }}
         run: |
-          [[ "$MAX_ITERS" =~ ^[0-9]+$ ]] || { echo "::error::max_iters must be a number"; exit 1; }
           cd sea/nanogpt
           ../../.tmp/venv/bin/python train.py ../config/train_marolagpt.py \
             --max_iters="$MAX_ITERS" --lr_decay_iters="$MAX_ITERS"
 
       - name: The release directory
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.plan.outputs.version }}
         run: .tmp/venv/bin/python sea/package.py --version "$VERSION"
 
-      - name: Upload to Hugging Face (only when dry_run is off)
+      - name: Upload to Hugging Face (a tag push, or by hand with dry_run off)
         env:
-          VERSION: ${{ inputs.version }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          VERSION: ${{ steps.plan.outputs.version }}
+          DRY_RUN: ${{ steps.plan.outputs.dry_run }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           if [ "$DRY_RUN" = true ]; then
