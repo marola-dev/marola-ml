@@ -60,6 +60,7 @@ not fit.
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
 | `marola-sea-publish.yml` | dispatch | train, merge, publish to Hugging Face, tag ([publishing](#publishing-marola-sea)) |
+| `marolagpt-publish.yml` | dispatch | marolaGPT: the corpus, training on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marolaGPT` (a dry run by default; no artifact kept) |
 | `notify-umbrella.yml` | push to main | ask the umbrella to move its pointer, and to rebuild docs.marola.dev when `README.md` or `docs/` changed |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
@@ -70,7 +71,7 @@ for yet.
 
 | Secret | Used by | For |
 |---|---|---|
-| `HF_TOKEN` | `marola-sea-publish.yml` | a fine-grained Hugging Face token with write access to the model repo; not set yet |
+| `HF_TOKEN` | `marola-sea-publish.yml`, `marolagpt-publish.yml` | a fine-grained Hugging Face token with write access to the model repo (`h0ffmann/marolaGPT` for marolaGPT); not set yet |
 | `PR_BOT_KEY` (with variable `PR_BOT_APP_ID`) | `compile-prompt.yml` | the PR in marola-app, opened as marola-pr-bot (MIP-0086) |
 | `MAROLA_CROSS_REPO_PAT` | `notify-umbrella.yml` | the umbrella dispatch (without it, a notice) |
 | `GITHUB_TOKEN` | `docker-local.yml` | pushing to ghcr.io, and pulling the app image, a private package that has to grant this repo read access |
@@ -88,7 +89,9 @@ This repo is where marola's money and irreversible steps are
 | `just compile-prompt` on Ollama; `compile-prompt.yml` | free (a local model) | a person dispatches the workflow; locally, anyone |
 | `just compile-prompt` on a paid model | cents to dollars | only after a human's go-ahead |
 | `just benchmark`, `just finetune-train preset=tiny` | local compute, minutes | anyone, an agent included |
+| `just marolagpt-prepare`, `-train`, `-sample`, `-package`; `just marolagpt-publish` without `--yes` | local compute, minutes; nothing leaves the machine | anyone, an agent included |
 | `marola-sea-publish.yml`, `just finetune-publish` | hours of training; an upload that cannot be taken back | a person, by hand |
+| `marolagpt-publish.yml` with dry_run off, `just marolagpt-publish <v> --yes` | an upload that cannot be taken back, under the restricted licence | a person, by hand |
 
 An agent dispatches no workflow and creates no tag or release: `.claude/settings.json` denies
 `gh workflow run`, `gh release` and `git tag`.
