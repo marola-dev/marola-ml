@@ -47,7 +47,7 @@ jobs:
         python3 finetune/build_dataset.py --self-test
         python3 finetune/build_dpo_dataset.py --self-test
 
-  # marola-sea-publish.yml is the one self-hosted workflow, and no pull request may reach it.
+  # No workflow is self-hosted since marola-sea-publish.yml was removed (2026-10-14); this keeps it so.
   runners:
     runs-on: ubuntu-latest
     timeout-minutes: 5
