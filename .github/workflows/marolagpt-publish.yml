@@ -1,0 +1,81 @@
+# marolaGPT publish — the whole chain on a GitHub-hosted runner, by hand only: the pinned
+# marola-corpus, the dataset, training from random weights on the CPU, the release directory, then
+# the upload to huggingface.co/h0ffmann/marolaGPT (private; the owner's account for now, 14 October
+# 2026). An upload cannot be taken back, so `dry_run` is on by default: the job then builds and
+# checks everything and uploads nothing. An agent never dispatches it (AGENTS.md). It needs the
+# HF_TOKEN secret (a fine-grained token with write access to that repository) only when dry_run is
+# off. docs/adr/0002 has the licence the release carries. The release is not kept as a workflow
+# artifact: on a public repository any GitHub user could download it, which the licence forbids.
+name: marolaGPT publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "the release version, X.Y.Z (tagged v<version> on Hugging Face)"
+        required: true
+      max_iters:
+        description: "training iterations (sea/config/train_marolagpt.py's default is 1000)"
+        default: "1000"
+      dry_run:
+        description: "build and check everything, upload nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marolagpt-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must be X.Y.Z, not $VERSION"; exit 1; }
+
+      - name: Python with sea/requirements.txt (torch for the CPU)
+        run: |
+          python3 -m venv .tmp/venv
+          .tmp/venv/bin/pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          .tmp/venv/bin/pip install --quiet -r sea/requirements.txt
+
+      - name: The pinned corpus, as nanoGPT's dataset
+        run: |
+          scripts/corpus-fetch.sh
+          .tmp/venv/bin/python sea/prepare_corpus.py
+
+      - name: Train marolaGPT from random weights
+        env:
+          MAX_ITERS: ${{ inputs.max_iters }}
+        run: |
+          [[ "$MAX_ITERS" =~ ^[0-9]+$ ]] || { echo "::error::max_iters must be a number"; exit 1; }
+          cd sea/nanogpt
+          ../../.tmp/venv/bin/python train.py ../config/train_marolagpt.py \
+            --max_iters="$MAX_ITERS" --lr_decay_iters="$MAX_ITERS"
+
+      - name: The release directory
+        env:
+          VERSION: ${{ inputs.version }}
+        run: .tmp/venv/bin/python sea/package.py --version "$VERSION"
+
+      - name: Upload to Hugging Face (only when dry_run is off)
+        env:
+          VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            .tmp/venv/bin/python sea/publish_hf.py --version "$VERSION"
+          else
+            [ -n "${HF_TOKEN:-}" ] || { echo "::error::the HF_TOKEN secret is not set"; exit 1; }
+            .tmp/venv/bin/python sea/publish_hf.py --version "$VERSION" --yes
+          fi

@@ -1,6 +1,6 @@
 # Fine-tuning (marola-sea)
 
-> **Superseded for marola-sea (2026-10-14).** marola-sea is now built only from nanoGPT, in
+> **Superseded for marola's own model (2026-10-14).** marola's model, marolaGPT, is built only from nanoGPT, in
 > [`sea/`](../sea/README.md) ([ADR 0001](adr/0001-marola-sea-from-nanogpt.md)). This page describes
 > the Llama 3.2 path, which still makes the `marola-llama3.2` model the app uses until an umbrella
 > MIP decides its end.

@@ -32,7 +32,8 @@ for a GPU node; nanoGPT is one small GPT that trains on a CPU, which is where ma
    every other file: the fork date, the commit and the MIT notice. `sea/FORK.tsv` records each
    file's upstream sha256; `sea/fork_check.py` (in `just quality`) holds the copy to it.
 2. Marola's own code beside it, in `sea/`: the corpus dataset, the training settings, the check.
-3. marola-sea is built only this way: `just sea-prepare`, `just sea-train`.
+3. marola-sea is built only this way: `just marolagpt-prepare`, `just marolagpt-train` (named
+   marolaGPT since [ADR 0002](0002-marolagpt-and-the-restricted-licence.md)).
 
 ## Consequences
 

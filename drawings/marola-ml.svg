@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-labelledby="t">
+  <title id="t">A small wave that curls once and runs on as a line of letters, each a dot, growing: an original drawing for marola-ml</title>
+  <path d="M14 132 C 40 132, 58 120, 76 98 C 96 74, 124 56, 150 62 C 176 68, 182 98, 164 110 C 150 120, 132 110, 138 96 C 144 84, 162 88, 166 102 C 172 124, 186 132, 206 132"
+        fill="none" stroke="#1682D4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="224" cy="132" r="3" fill="#F2B705"/>
+  <circle cx="242" cy="132" r="4.5" fill="#F2B705"/>
+  <circle cx="263" cy="132" r="6" fill="#F2B705"/>
+  <circle cx="288" cy="132" r="7.5" fill="#F2B705"/>
+  <path d="M40 156 H 300" fill="none" stroke="#1682D4" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 8"/>
+</svg>
