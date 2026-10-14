@@ -21,7 +21,9 @@ are many other forks out there and this is educational distribution of a model (
 2. **The chain.** `just marolagpt <version>`: the pinned corpus, the dataset, training from random
    weights, the release directory (weights, vocabulary, card, licence, checksums), then the upload
    to `h0ffmann/marolaGPT` on Hugging Face, a dry run unless `--yes`. In CI,
-   `marolagpt-publish.yml`, dispatched by hand, a dry run by default.
+   `marola-gpt-publish.yml`, dispatched by hand, a dry run by default. It replaces
+   `marola-sea-publish.yml`, the Llama path's publish, which is removed (the owner's choice,
+   14 October 2026).
 3. **The licence.** `LICENSE` becomes the marola-ml Restricted License: marola-dev's contributors
    may use the repository inside marola-dev; others may read and cite it; marolaGPT may not be
    distributed outside marola-dev's channels.
@@ -39,5 +41,5 @@ are many other forks out there and this is educational distribution of a model (
   `h0ffmann/marolaGPT` as marola's channel while the owner keeps it so. `publish_hf.py` creates the
   repository private; making it public is the owner's act on Hugging Face.
 - **No workflow artifact.** On a public repository any GitHub user can download a workflow's
-  artifacts, so `marolagpt-publish.yml` keeps none.
+  artifacts, so `marola-gpt-publish.yml` keeps none.
 - **Wording.** The licence was written by an agent, from the owner's words, and not by a lawyer.

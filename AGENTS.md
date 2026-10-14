@@ -43,7 +43,7 @@ fine-tune (marola-sea), and the benchmark gate with its kept runs.
 | app → ml | The resources tarball `ml-resources-<tag>.tar.gz` on an app release: the compiled prompts, `sea_lore.json`, `benchmark_questions.json`. marola-app's `release.yml` attaches it to each `v*` tag | `resources.version`; `just resources-fetch` unpacks it into `.tmp/resources` |
 | corpus → ml | `marola-corpus-<tag>.tar.gz` | `corpus.version`; `just corpus-fetch` unpacks it into `.tmp/knowledge` |
 | ml → app | The compiled prompts, as a PR to the app's `core/src/main/resources/` (`compile-prompt.yml`) | The files in the app |
-| ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marola-sea on Hugging Face (`marola-sea-publish.yml`) | Image tag; model repo |
+| ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marolaGPT on Hugging Face (`marola-gpt-publish.yml`) | Image tag; model repo |
 | ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); pdoc of `finetune/` and `scripts/` on the `api-docs` branch (`ci.yml`'s `api-docs` job) | Pulled by the aggregator |
 
 No workflow here builds the app or reads its tree. Bump `marola-image` and `resources.version`
@@ -92,11 +92,13 @@ As in the umbrella, and stricter here, because this repo is where the money is:
 
 - `compile-prompt.yml` compiles against a model Ollama serves inside the job, never a paid
   endpoint. A local `just compile-prompt` against a paid model needs a human's go-ahead first.
-- `marola-sea-publish.yml` trains for hours on the self-hosted `marola-sea` runner and uploads to
-  Hugging Face, which cannot be taken back. Dispatch only, by a human; it may never gain a trigger a
-  pull request can reach (`ci.yml`'s `runners` job enforces it). It waits on the HF_TOKEN secret,
-  and separately on the marola-sea runners being registered for this repo. Its first dispatch
-  here needs `major_version: 2` ([publishing](docs/3-development.md#publishing-marola-sea)).
+- `marola-gpt-publish.yml` trains marolaGPT on a GitHub-hosted runner and uploads it to Hugging
+  Face, which cannot be taken back. Dispatch only, by a human, a dry run unless `dry_run` is off; it
+  may never gain a trigger a pull request can reach, and it keeps no artifact (the model's licence
+  forbids distribution outside marola's channels). It replaced `marola-sea-publish.yml` on
+  14 October 2026; the devkit's runner guard still names the old file, so a trigger added here is
+  caught by review, not by `ci.yml`, until the devkit learns the new name
+  ([publishing](docs/3-development.md#publishing-marolagpt)).
 - An agent does not dispatch workflows, create tags or releases (`.claude/settings.json` denies
   `gh workflow run`, `gh release` and `git tag`).
 
