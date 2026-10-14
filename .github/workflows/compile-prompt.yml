@@ -3,7 +3,7 @@ name: compile prompt (DSPy, then a PR to the app)
 # MIP-0070 §5.4 ml → app: the compiled prompts reach the app as a pull request it reviews, never as
 # a write into its tree. The compile calls an LLM many times, so it is a manual step: dispatch only,
 # and only a model Ollama serves inside this job (free), never a paid endpoint (AGENTS.md cost rule).
-# The PR is opened with MAROLA_CROSS_REPO_PAT; the app lives in marola until MIP-0070 task 15.
+# The PR is opened as marola-pr-bot (MIP-0086).
 
 on:
   workflow_dispatch:
@@ -32,11 +32,11 @@ jobs:
         image: ollama/ollama:0.33.3
         ports: ["11434:11434"]
     steps:
-      # Before the compile, which can take an hour: without the PAT the PR step could only fail.
-      - name: MAROLA_CROSS_REPO_PAT is available to this repo
+      # Before the compile, which can take an hour: without the App the PR step could only fail.
+      - name: marola-pr-bot is configured
         env:
-          PAT: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
-        run: '[ -n "$PAT" ] || { echo "::error::MAROLA_CROSS_REPO_PAT is not granted to this repo"; exit 1; }'
+          APP_ID: ${{ vars.PR_BOT_APP_ID }}
+        run: '[ -n "$APP_ID" ] || { echo "::error::vars.PR_BOT_APP_ID is not visible to this repo"; exit 1; }'
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
@@ -67,15 +67,25 @@ jobs:
           name: compiled-prompt-${{ github.run_id }}
           path: .tmp/compiled/
 
+      # Minted after the compile: the token lives one hour.
+      - id: bot
+        uses: marola-dev/marola-devkit/.github/actions/bot-token@v0.10.1
+        with:
+          app-id: ${{ vars.PR_BOT_APP_ID }}
+          private-key: ${{ secrets.PR_BOT_KEY }}
+          repositories: marola-app
+          permission-contents: write
+          permission-pull-requests: write
+
       - uses: actions/checkout@v7
         with:
           repository: ${{ env.APP_REPO }}
           path: app
-          token: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          token: ${{ steps.bot.outputs.token }}
 
       - name: open the PR in the app
         env:
-          GH_TOKEN: ${{ secrets.MAROLA_CROSS_REPO_PAT }}
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
           MODEL: ${{ inputs.model }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           BRANCH: ml/compiled-prompt-${{ github.run_id }}
@@ -83,8 +93,6 @@ jobs:
           cp .tmp/compiled/recommendation_prompt.json .tmp/compiled/review_prompt.json app/core/src/main/resources/
           cd app
           if git diff --quiet -- core/src/main/resources; then echo "the compiled prompts are unchanged — no PR"; exit 0; fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
           git add core/src/main/resources/recommendation_prompt.json core/src/main/resources/review_prompt.json
           git commit -q -F - <<MSG
