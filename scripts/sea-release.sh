@@ -31,6 +31,9 @@ bump() {
   esac
 }
 
+# releasable <X.Y.Z>: every version but 0.0.0
+releasable() { [ "$1" != 0.0.0 ]; }
+
 # newer <a> <b>: a sorts strictly after b (b may be empty)
 newer() { [ -z "$2" ] || { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }; }
 
@@ -48,6 +51,8 @@ if [ "${1:-}" = --self-test ]; then
   newer 0.10.0 0.9.0 || fail "0.10.0 not newer than 0.9.0"
   newer 0.1.0 "" || fail "a first version is not newer than nothing"
   ! newer 0.1.0 0.1.0 || fail "a version is newer than itself"
+  ! releasable 0.0.0 || fail "0.0.0 is releasable"
+  releasable 0.0.1 || fail "0.0.1 is not releasable"
   echo "sea-release: self-test ok" >&2
   exit 0
 fi
@@ -68,6 +73,7 @@ case "$want" in
   *) next="${want#"$PREFIX"}" ;;
 esac
 valid "$next" || { echo "sea-release: '$want' is not major, minor, patch or X.Y.Z" >&2; exit 1; }
+releasable "$next" || { echo "sea-release: 0.0.0 is not a release; the first is 0.1.0" >&2; exit 1; }
 newer "$next" "$prev" || { echo "sea-release: $next does not come after ${prev:-nothing}" >&2; exit 1; }
 tag="$PREFIX$next"
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && { echo "sea-release: $tag already exists" >&2; exit 1; }
