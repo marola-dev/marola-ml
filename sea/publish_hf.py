@@ -1,13 +1,12 @@
-"""publish_hf: upload one packaged marolaGPT release to its Hugging Face model repository.
+"""publish_hf: upload one packaged marola-gpt release to its Hugging Face model repository.
 
     python3 sea/publish_hf.py --version 0.1.0                # dry run: say what would be uploaded
     python3 sea/publish_hf.py --version 0.1.0 --yes          # upload (HF_TOKEN, or a prior login)
     python3 sea/publish_hf.py --self-test
 
-The repository is h0ffmann/marolaGPT for now (the owner, 14 October 2026), created private when it
-does not exist: marolaGPT's licence forbids distribution outside marola's own channels, and making
-the repository public is the owner's decision on the Hugging Face side. The upload is one commit
-named "marolaGPT <version>" and tagged v<version>; an upload cannot be taken back, so without
+The repository is h0ffmann/marola-gpt for now (the owner, 14 October 2026), created public when it
+does not exist: marola-gpt is MIT, distributed openly (--private creates it private instead). The upload is one commit
+named "marola-gpt <version>" and tagged v<version>; an upload cannot be taken back, so without
 --yes nothing leaves this machine. CHECKSUMS is checked against the files before anything is sent.
 """
 
@@ -20,7 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RELEASES = ROOT / "sea" / "release"
-REPO = "h0ffmann/marolaGPT"
+REPO = "h0ffmann/marola-gpt"
 FILES = ("model.pt", "meta.pkl", "LICENSE", "README.md", "CHECKSUMS")
 
 
@@ -36,13 +35,13 @@ def verify(release: Path) -> list[str]:
     return errors
 
 
-def publish(release: Path, repo: str, version: str, api) -> str:
-    api.create_repo(repo_id=repo, repo_type="model", private=True, exist_ok=True)
+def publish(release: Path, repo: str, version: str, api, private: bool = False) -> str:
+    api.create_repo(repo_id=repo, repo_type="model", private=private, exist_ok=True)
     info = api.upload_folder(
         folder_path=str(release),
         repo_id=repo,
         repo_type="model",
-        commit_message=f"marolaGPT {version}",
+        commit_message=f"marola-gpt {version}",
     )
     api.create_tag(repo_id=repo, repo_type="model", tag=f"v{version}")
     return getattr(info, "commit_url", str(info))
@@ -91,15 +90,17 @@ def self_test() -> int:
             calls[0]
             == (
                 "create_repo",
-                {"repo_id": REPO, "repo_type": "model", "private": True, "exist_ok": True},
+                {"repo_id": REPO, "repo_type": "model", "private": False, "exist_ok": True},
             ),
-            "the repository is created private when it does not exist",
+            "the repository is created public when it does not exist",
         )
         ok(
-            calls[1][1]["commit_message"] == "marolaGPT 0.1.0" and calls[2][1]["tag"] == "v0.1.0",
+            calls[1][1]["commit_message"] == "marola-gpt 0.1.0" and calls[2][1]["tag"] == "v0.1.0",
             "one commit named after the version, tagged v<version>",
         )
         ok(url.endswith("/commit/1"), "the commit's address is returned")
+        publish(r, REPO, "0.1.0", Api(), private=True)
+        ok(calls[3][1]["private"] is True, "--private creates it private")
     print("publish_hf self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
     return 1 if fails else 0
 
@@ -111,13 +112,14 @@ def main() -> int:
     ap.add_argument("--version")
     ap.add_argument("--repo", default=REPO)
     ap.add_argument("--yes", action="store_true", help="upload; without it, a dry run")
+    ap.add_argument("--private", action="store_true", help="create the repository private")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
     if not a.version:
         ap.error("--version X.Y.Z is required")
-    release = RELEASES / f"marolaGPT-{a.version}"
+    release = RELEASES / f"marola-gpt-{a.version}"
     errors = verify(release)
     if errors:
         for e in errors:
@@ -125,14 +127,16 @@ def main() -> int:
         return 1
     size = sum((release / n).stat().st_size for n in FILES)
     print(
-        f"publish_hf: {release} ({size:,} bytes, {len(FILES)} files) -> huggingface.co/{a.repo}, private"
+        f"publish_hf: {release} ({size:,} bytes, {len(FILES)} files) -> huggingface.co/{a.repo}, {'private' if a.private else 'public'}"
     )
     if not a.yes:
         print("publish_hf: dry run; nothing was uploaded (add --yes to upload)")
         return 0
     from huggingface_hub import HfApi
 
-    url = publish(release, a.repo, a.version, HfApi(token=os.environ.get("HF_TOKEN")))
+    url = publish(
+        release, a.repo, a.version, HfApi(token=os.environ.get("HF_TOKEN")), private=a.private
+    )
     print(f"publish_hf: uploaded {url}")
     return 0
 

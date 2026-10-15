@@ -1,4 +1,4 @@
-# marolaGPT (sea/): what nanoGPT's train.py and sample.py import, and the Hugging Face upload. Loosely pinned, like
+# marola-gpt (sea/): what nanoGPT's train.py and sample.py import, and the Hugging Face upload. Loosely pinned, like
 # finetune/requirements.txt; on a CPU-only machine install torch from
 # https://download.pytorch.org/whl/cpu. Checked on 2026-10-14 with torch 2.7.1 (CPU).
 torch>=2.7

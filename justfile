@@ -60,36 +60,36 @@ finetune-publish repo gguf base *args:
 
 # Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv; call its
 # bin/python-cuda afterwards, never bin/python.
-# marolaGPT, marola's own small language model, built from karpathy/nanoGPT copied into sea/nanogpt
+# marola-gpt, marola's own small language model, built from karpathy/nanoGPT copied into sea/nanogpt
 # (docs/adr/0001, 0002). The chain: corpus -> dataset -> training -> release -> Hugging Face.
 # SEA_PYTHON is a Python with sea/requirements.txt installed (default python3).
 
-# marolaGPT: the pinned marola-corpus as a character-level dataset for nanoGPT.
-marolagpt-prepare: corpus-fetch
+# marola-gpt: the pinned marola-corpus as a character-level dataset for nanoGPT.
+marola-gpt-prepare: corpus-fetch
     ${SEA_PYTHON:-python3} sea/prepare_corpus.py
 
-# marolaGPT: train from random weights (sea/config/train_marolagpt.py; --key=value overrides).
-marolagpt-train *args="":
-    cd sea/nanogpt && ${SEA_PYTHON:-python3} train.py ../config/train_marolagpt.py {{ args }}
+# marola-gpt: train from random weights (sea/config/train_marola_gpt.py; --key=value overrides).
+marola-gpt-train *args="":
+    cd sea/nanogpt && ${SEA_PYTHON:-python3} train.py ../config/train_marola_gpt.py {{ args }}
 
-# marolaGPT: sample text from the best checkpoint.
-marolagpt-sample *args="":
-    cd sea/nanogpt && ${SEA_PYTHON:-python3} sample.py --out_dir=out-marolagpt --device=cpu --num_samples=1 --max_new_tokens=300 {{ args }}
+# marola-gpt: sample text from the best checkpoint.
+marola-gpt-sample *args="":
+    cd sea/nanogpt && ${SEA_PYTHON:-python3} sample.py --out_dir=out-marola-gpt --device=cpu --num_samples=1 --max_new_tokens=300 {{ args }}
 
-# marolaGPT: the release directory sea/release/marolaGPT-<version>/ (weights, vocabulary, card, licence, checksums).
-marolagpt-package version:
+# marola-gpt: the release directory sea/release/marola-gpt-<version>/ (weights, vocabulary, card, licence, checksums).
+marola-gpt-package version:
     ${SEA_PYTHON:-python3} sea/package.py --version {{ version }}
 
-# marolaGPT: upload a packaged release to huggingface.co/h0ffmann/marolaGPT (private). A dry run unless args has --yes.
-marolagpt-publish version *args="":
+# marola-gpt: upload a packaged release to huggingface.co/h0ffmann/marola-gpt (public). A dry run unless args has --yes.
+marola-gpt-publish version *args="":
     ${SEA_PYTHON:-python3} sea/publish_hf.py --version {{ version }} {{ args }}
 
-# marolaGPT: the whole chain up to the release directory, then a dry run of the upload.
-marolagpt version: marolagpt-prepare marolagpt-train
-    just marolagpt-package {{ version }}
-    just marolagpt-publish {{ version }}
+# marola-gpt: the whole chain up to the release directory, then a dry run of the upload.
+marola-gpt version: marola-gpt-prepare marola-gpt-train
+    just marola-gpt-package {{ version }}
+    just marola-gpt-publish {{ version }}
 
-# marolaGPT release: tag main as marolagpt-vX.Y.Z (next patch by default) and push it; the tag publishes via CD.
+# marola-gpt release: tag main as marola-gpt-vX.Y.Z (next patch by default) and push it; the tag publishes via CD.
 sea-release *args="":
     scripts/sea-release.sh {{ args }}
 

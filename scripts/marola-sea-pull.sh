@@ -136,7 +136,7 @@ if ! ollama pull "$ref"; then
   else
     echo "marola-sea-pull: pull failed, and $repo lists no GGUF (or is unreachable)." >&2
     echo "                 Check https://huggingface.co/$repo — if it is empty, run the" >&2
-    echo "                 marola-sea publish workflow, which was removed on 2026-10-14 (marola-gpt-publish.yml publishes marolaGPT)." >&2
+    echo "                 marola-sea publish workflow, which was removed on 2026-10-14 (marola-gpt-publish.yml publishes marola-gpt)." >&2
   fi
   exit 1
 fi
