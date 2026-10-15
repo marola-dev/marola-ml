@@ -2,11 +2,12 @@
 # sea-release — release marola-gpt: tag main as marola-gpt-vX.Y.Z and push the tag. The tag is the
 # pattern that publishes: marola-gpt-publish.yml runs on a pushed `marola-gpt-v*` tag (and by hand),
 # never on a merge, so main can move for weeks without touching Hugging Face. The workflow then
-# trains marola-gpt from the pinned corpus, packages it and uploads it to h0ffmann/marola-gpt, tagged
+# trains marola-gpt (a LoRA adapter on Tucano-2b4) from the pinned corpus, packages it and uploads it to h0ffmann/marola-gpt, tagged
 # v<X.Y.Z> there. An upload cannot be taken back, so this refuses anything but a clean main, level
 # with origin, whose CI passed, and a version that goes up.
 #
-#   just sea-release                       # the next patch: marola-gpt-v0.0.1 first, then 0.0.2, ...
+#   just sea-release minor                 # the first LoRA release, marola-gpt-v0.1.0
+#   just sea-release                       # then the next patch: 0.1.1, 0.1.2, ...
 #   just sea-release minor|major|X.Y.Z     # another bump, or an exact version
 #   just sea-release patch --dry-run       # every check, and the tag it would push; pushes nothing
 #   scripts/sea-release.sh --self-test
@@ -31,8 +32,8 @@ bump() {
   esac
 }
 
-# releasable <X.Y.Z>: every version but 0.0.0
-releasable() { [ "$1" != 0.0.0 ]; }
+# releasable <X.Y.Z>: 0.1.0 and later; 0.0.x were nanoGPT's, and the workflow trains a LoRA (docs/adr/0004)
+releasable() { [[ "$1" != 0.0.* ]]; }
 
 # newer <a> <b>: a sorts strictly after b (b may be empty)
 newer() { [ -z "$2" ] || { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }; }
@@ -53,7 +54,8 @@ if [ "${1:-}" = --self-test ]; then
   newer 0.1.0 "" || fail "a first version is not newer than nothing"
   ! newer 0.1.0 0.1.0 || fail "a version is newer than itself"
   ! releasable 0.0.0 || fail "0.0.0 is releasable"
-  releasable 0.0.1 || fail "0.0.1 is not releasable"
+  ! releasable 0.0.2 || fail "0.0.2, a nanoGPT version, is releasable"
+  releasable 0.1.0 || fail "0.1.0 is not releasable"
   echo "sea-release: self-test ok" >&2
   exit 0
 fi
@@ -74,7 +76,7 @@ case "$want" in
   *) next="${want#"$PREFIX"}" ;;
 esac
 valid "$next" || { echo "sea-release: '$want' is not major, minor, patch or X.Y.Z" >&2; exit 1; }
-releasable "$next" || { echo "sea-release: 0.0.0 is not a release; the first is 0.0.1" >&2; exit 1; }
+releasable "$next" || { echo "sea-release: $next is a nanoGPT version (0.0.x); a LoRA release is 0.1.0 or later: just sea-release minor" >&2; exit 1; }
 newer "$next" "$prev" || { echo "sea-release: $next does not come after ${prev:-nothing}" >&2; exit 1; }
 tag="$PREFIX$next"
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && { echo "sea-release: $tag already exists" >&2; exit 1; }

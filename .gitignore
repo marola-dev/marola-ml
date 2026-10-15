@@ -16,3 +16,4 @@ dspy/.venv/
 /sea/nanogpt/data/marola_corpus/
 /sea/nanogpt/out-*/
 /sea/release/
+/sea/out-marola-gpt/

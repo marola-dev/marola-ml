@@ -1,13 +1,13 @@
-# marola-gpt-publish — the one publish workflow of marola-ml (it replaced marola-sea-publish.yml on
-# 14 October 2026): the pinned marola-corpus, the dataset, training from random weights on a
-# GitHub-hosted CPU, the release directory, then the upload to huggingface.co/h0ffmann/marola-gpt
-# (public, MIT; the owner's account for now). It never runs on a merge. The pattern that publishes is a
-# pushed tag `marola-gpt-vX.Y.Z` on a commit of main, which `just sea-release` makes (the owner,
-# 14 October 2026: "I don't want to publish to hugging face on every merge, I need a pattern"). By
-# hand (workflow_dispatch) it is a dry run unless `dry_run` is unticked. An upload cannot be taken
-# back; an agent never pushes the tag or dispatches this (AGENTS.md). HF_TOKEN (a fine-grained token
-# with write access to that repository) is needed only to upload. The release is MIT
-# (docs/adr/0003). It is not kept as a workflow artifact: a release belongs on Hugging Face.
+# marola-gpt-publish — the one publish workflow of marola-ml: the pinned marola-corpus, a LoRA
+# adapter trained on TucanoBR/Tucano-2b4 (pinned revision, sea/finetune_tucano.py) on a GitHub-hosted
+# CPU, the release directory, then the upload to huggingface.co/h0ffmann/marola-gpt (public; the
+# owner's account for now). It never runs on a merge. The pattern that publishes is a pushed tag
+# `marola-gpt-vX.Y.Z` on a commit of main, which `just sea-release` makes (the owner, 14 October
+# 2026: "I don't want to publish to hugging face on every merge, I need a pattern"). By hand
+# (workflow_dispatch) it is a dry run unless `dry_run` is unticked. An upload cannot be taken back;
+# an agent never pushes the tag or dispatches this (AGENTS.md). HF_TOKEN (a fine-grained token with
+# write access to that repository) is needed only to upload. The release carries Tucano-2b4's
+# Apache-2.0 (docs/adr/0004). It is not kept as a workflow artifact: a release belongs on Hugging Face.
 name: marola-gpt publish
 
 on:
@@ -18,9 +18,9 @@ on:
       version:
         description: "the release version, X.Y.Z (tagged v<version> on Hugging Face); a tag push uses the tag's"
         required: true
-      max_iters:
-        description: "training iterations (sea/config/train_marola_gpt.py's default is 1000)"
-        default: "1000"
+      steps:
+        description: "LoRA training steps (sea/finetune_tucano.py's default is 200)"
+        default: "200"
       dry_run:
         description: "build and check everything, upload nothing"
         type: boolean
@@ -50,19 +50,20 @@ jobs:
           TAG: ${{ github.ref_name }}
           IN_VERSION: ${{ inputs.version }}
           IN_DRY_RUN: ${{ inputs.dry_run }}
-          IN_MAX_ITERS: ${{ inputs.max_iters }}
+          IN_STEPS: ${{ inputs.steps }}
         run: |
           if [ "$EVENT" = push ]; then
-            version="${TAG#marola-gpt-v}" dry_run=false max_iters=1000
+            version="${TAG#marola-gpt-v}" dry_run=false steps=200
             git merge-base --is-ancestor "$GITHUB_SHA" origin/main \
               || { echo "::error::$TAG is not on main; only a commit of main is published"; exit 1; }
           else
-            version="$IN_VERSION" dry_run="$IN_DRY_RUN" max_iters="$IN_MAX_ITERS"
+            version="$IN_VERSION" dry_run="$IN_DRY_RUN" steps="$IN_STEPS"
           fi
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must be X.Y.Z, not $version"; exit 1; }
-          [[ "$max_iters" =~ ^[0-9]+$ ]] || { echo "::error::max_iters must be a number"; exit 1; }
-          echo "marola-gpt $version: max_iters $max_iters, dry_run $dry_run"
-          { echo "version=$version"; echo "dry_run=$dry_run"; echo "max_iters=$max_iters"; } >> "$GITHUB_OUTPUT"
+          [[ "$steps" =~ ^[0-9]+$ ]] || { echo "::error::steps must be a number"; exit 1; }
+          [[ "$version" != 0.0.* ]] || { echo "::error::0.0.x were nanoGPT releases; a LoRA release is 0.1.0 or later"; exit 1; }
+          echo "marola-gpt $version: steps $steps, dry_run $dry_run"
+          { echo "version=$version"; echo "dry_run=$dry_run"; echo "steps=$steps"; } >> "$GITHUB_OUTPUT"
 
       - name: Python with sea/requirements.txt (torch for the CPU)
         run: |
@@ -70,18 +71,13 @@ jobs:
           .tmp/venv/bin/pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
           .tmp/venv/bin/pip install --quiet -r sea/requirements.txt
 
-      - name: The pinned corpus, as nanoGPT's dataset
+      # Tucano-2b4 is about 4.9 GB in bf16; it is downloaded into the runner's Hugging Face cache.
+      - name: Train the LoRA adapter on Tucano-2b4, from the pinned corpus
+        env:
+          STEPS: ${{ steps.plan.outputs.steps }}
         run: |
           scripts/corpus-fetch.sh
-          .tmp/venv/bin/python sea/prepare_corpus.py
-
-      - name: Train marola-gpt from random weights
-        env:
-          MAX_ITERS: ${{ steps.plan.outputs.max_iters }}
-        run: |
-          cd sea/nanogpt
-          ../../.tmp/venv/bin/python train.py ../config/train_marola_gpt.py \
-            --max_iters="$MAX_ITERS" --lr_decay_iters="$MAX_ITERS"
+          .tmp/venv/bin/python sea/finetune_tucano.py --steps "$STEPS"
 
       - name: The release directory
         env:

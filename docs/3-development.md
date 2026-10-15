@@ -50,7 +50,7 @@ any workflow names `self-hosted`. The devkit's recipes for a runner (`just runne
 | `ci.yml` | every PR, push to main | the devkit's static-ci (actionlint, hadolint, shellcheck, docs-lint), python-ci (ruff and every `--self-test`), the runner guard, agents-check, and the `api-docs` job (`just api-docs` as a check; on main, the output goes to the `api-docs` branch) |
 | `docker-local.yml` | push to main touching the model, the pins or the gate; dispatch | build `Dockerfile.local`, benchmark it, move `:local` if the gate passes ([gate](3-development_benchmark-gate.md)) |
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
-| `marola-gpt-publish.yml` | a pushed `marola-gpt-v*` tag on main (`just sea-release`); dispatch | marola-gpt: the corpus, training on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marola-gpt` (a dry run by hand; no artifact kept) ([publishing](#publishing-marola-gpt)) |
+| `marola-gpt-publish.yml` | a pushed `marola-gpt-v*` tag on main (`just sea-release`); dispatch | marola-gpt: the corpus, a LoRA on Tucano-2b4 trained on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marola-gpt` (a dry run by hand; no artifact kept) ([publishing](#publishing-marola-gpt)) |
 | `notify-umbrella.yml` | push to main | ask the umbrella to move its pointer, and to rebuild docs.marola.dev when `README.md` or `docs/` changed |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
@@ -92,12 +92,14 @@ An agent dispatches no workflow and creates no tag or release: `.claude/settings
 pattern that publishes is a tag `marola-gpt-vX.Y.Z` on a commit of main: `just sea-release`
 (`scripts/sea-release.sh`) increments the highest such tag, checks that main is clean, level and
 green in CI, and pushes it; the workflow takes its version from the tag, refuses a tag that is not
-on main, and uploads. By hand it takes a version (`X.Y.Z`), the number of training iterations, and
-`dry_run` (on by default). Either way, on a GitHub-hosted runner it fetches
-the pinned corpus, prepares the dataset, trains marola-gpt from random weights on the CPU, writes the
-release directory (`sea/package.py`) and, on a tag or with `dry_run` off, with the `HF_TOKEN` secret set,
-uploads it to `h0ffmann/marola-gpt` as one commit tagged `v<version>` (`sea/publish_hf.py`, which
-creates the repository public; the model is MIT). It keeps no artifact. Locally the same chain is
+on main, and uploads. By hand it takes a version (`X.Y.Z`), the number of LoRA training steps, and
+`dry_run` (on by default). Either way, on a GitHub-hosted runner it fetches the pinned corpus,
+downloads TucanoBR/Tucano-2b4 at the revision `sea/finetune_tucano.py` pins, trains a LoRA adapter
+on it on the CPU ([ADR 0004](adr/0004-marola-gpt-sobre-tucano.md)), writes the release directory
+(`sea/package.py`) and, on a tag or with `dry_run` off, with the `HF_TOKEN` secret set, uploads it
+to `h0ffmann/marola-gpt` as one commit tagged `v<version>` (`sea/publish_hf.py`, which creates the
+repository public; the weights carry Tucano-2b4's Apache-2.0). Versions 0.0.x were nanoGPT's, and
+both the workflow and `just sea-release` refuse them. It keeps no artifact. Locally the same chain is
 `just marola-gpt <version>`, and `just marola-gpt-publish <version> --yes` uploads.
 
 The Llama path's former publish, `marola-sea-publish.yml` (SFT and DPO on the self-hosted runner,
