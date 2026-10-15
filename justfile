@@ -89,6 +89,10 @@ marolagpt version: marolagpt-prepare marolagpt-train
     just marolagpt-package {{ version }}
     just marolagpt-publish {{ version }}
 
+# marolaGPT release: tag main as marolagpt-vX.Y.Z (next patch by default) and push it; the tag publishes via CD.
+sea-release *args="":
+    scripts/sea-release.sh {{ args }}
+
 ml-venv *args:
     REQUIREMENTS=finetune/requirements.txt VENV_ROOT="${VENV_ROOT:-$HOME/.marola-ml-venv}" setup-ml-venv {{ args }}
 
@@ -160,6 +164,7 @@ quality: corpus-fetch resources-fetch
     scripts/benchmark.sh --self-test
     scripts/api-docs.sh --self-test
     scripts/marola-sea-pull.sh --self-test
+    scripts/sea-release.sh --self-test
     python3 scripts/benchmark_gate.py --self-test
     python3 scripts/analyze_training.py --self-test
     python3 finetune/train_lora.py --self-test

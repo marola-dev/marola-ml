@@ -93,8 +93,10 @@ As in the umbrella, and stricter here, because this repo is where the money is:
 - `compile-prompt.yml` compiles against a model Ollama serves inside the job, never a paid
   endpoint. A local `just compile-prompt` against a paid model needs a human's go-ahead first.
 - `marola-gpt-publish.yml` trains marolaGPT on a GitHub-hosted runner and uploads it to Hugging
-  Face, which cannot be taken back. Dispatch only, by a human, a dry run unless `dry_run` is off; it
-  may never gain a trigger a pull request can reach, and it keeps no artifact (the model's licence
+  Face, which cannot be taken back. It runs on a pushed `marolagpt-v*` tag on main (`just
+  sea-release`, the owner's) and by hand (a dry run unless `dry_run` is off); never on a merge, and
+  it may never gain a trigger a pull request can reach. An agent pushes no tag, so it never starts
+  a publish. It keeps no artifact (the model's licence
   forbids distribution outside marola's channels). It replaced `marola-sea-publish.yml` on
   14 October 2026; the devkit's runner guard still names the old file, so a trigger added here is
   caught by review, not by `ci.yml`, until the devkit learns the new name
