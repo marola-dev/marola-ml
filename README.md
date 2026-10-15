@@ -1,6 +1,6 @@
 <div align="center">
 
-<img alt="A small wave that curls once and runs on as a line of letters, each a dot, growing: an original drawing for marola-ml" src="drawings/marola-ml.svg" width="300"/>
+<img alt="A small wave that curls once and runs on as a line of letters, each a dot, growing: an original drawing for marola-ml" src="docs/img/marola-ml.svg" width="300"/>
 
 # marola-ml
 
