@@ -37,6 +37,21 @@ Its text is never advice about the sea. **Its first release, 0.0.1, is on Huggin
 **Where it is distributed.** On Hugging Face at `huggingface.co/h0ffmann/marola-gpt`, under the
 owner's account for now (14 October 2026), public, under the MIT License like this repository.
 
+### Ask it
+
+```bash
+nix develop
+export SEA_PYTHON=/path/to/python                 # with sea/requirements.txt installed
+just marola-gpt-ask "Rip currents"                # the latest release, 200 characters more
+just marola-gpt-ask "A água-viva" --version 0.0.1 --tokens 300 --temperature 0.8 --seed 1
+```
+
+marola-gpt is not a chat model: it continues the text it is given, one character at a time, and
+today its continuation is word-shaped noise. `just marola-gpt-ask` downloads the release from
+Hugging Face at its tag into Hugging Face's own cache (`~/.cache/huggingface`), checks every file
+against the release's `CHECKSUMS`, and runs nanoGPT's model on the CPU; the second call does not
+download again. A character the model never saw (its corpus has 87) is refused by name.
+
 ## From the corpus to Hugging Face
 
 The chain has five steps: the pinned corpus, the dataset, training from random weights, the
