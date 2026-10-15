@@ -14,7 +14,7 @@ under Andrej Karpathy's MIT License ([`nanogpt/LICENSE`](nanogpt/LICENSE)).
 ```bash
 # a Python with sea/requirements.txt installed (CPU: torch from download.pytorch.org/whl/cpu)
 export SEA_PYTHON=/path/to/python
-just marola-gpt-train                  # the pinned corpus -> a LoRA adapter in out-marola-gpt/ (--steps, --lr)
+just marola-gpt-train                  # the pinned corpus -> a LoRA adapter in out-marola-gpt/ (--steps, --lr, --device)
 just marola-gpt-sample "A água-viva"   # text from that adapter on Tucano-2b4
 just marola-gpt-package 0.1.0          # release/marola-gpt-0.1.0/: adapter, LICENSE, README.md, CHECKSUMS
 just marola-gpt-publish 0.1.0          # a dry run; --yes uploads to huggingface.co/h0ffmann/marola-gpt (public)
@@ -31,7 +31,7 @@ The adapter is 6 402 376 bytes. Its text is fluent Portuguese with no hold on th
 | Path | Whose | What |
 |---|---|---|
 | `nanogpt/` | Andrej Karpathy's, MIT | nanoGPT at `3adf61e154c3`, each file with a provenance header; listed in [`FORK.tsv`](FORK.tsv) |
-| `finetune_tucano.py` | marola's | the LoRA training on Tucano-2b4, and the base's pinned revision |
+| `finetune_tucano.py` | marola's | the LoRA training on Tucano-2b4, the base's pinned revision, and the device choice (`--device auto` takes a CUDA GPU when there is one) |
 | `LICENSE-Tucano-2b4` | Tucano's, Apache-2.0 | copied byte for byte from TucanoBR/Tucano-2b4; every release carries it |
 | `ask.py` | marola's | a prompt continued by a release, or by a local adapter |
 | `prepare_corpus.py` | marola's | reads the corpus notes; also nanoGPT's character-level dataset (0.0.x) |

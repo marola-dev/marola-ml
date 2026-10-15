@@ -77,7 +77,7 @@ jobs:
           STEPS: ${{ steps.plan.outputs.steps }}
         run: |
           scripts/corpus-fetch.sh
-          .tmp/venv/bin/python sea/finetune_tucano.py --steps "$STEPS"
+          .tmp/venv/bin/python sea/finetune_tucano.py --steps "$STEPS" --device cpu
 
       - name: The release directory
         env:

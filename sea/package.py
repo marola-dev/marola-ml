@@ -58,7 +58,7 @@ is not advice about the sea.
 | Base | {f["base"]} at `{f["base_revision"]}` (Apache-2.0), unchanged |
 | Change | LoRA r={f["lora"]["r"]}, alpha={f["lora"]["lora_alpha"]} on {", ".join(f["lora"]["target_modules"])}: {f["trainable_params"]:,} trainable parameters |
 | Training data | marola-corpus {f["corpus"]}: {f["tokens"]:,} tokens, blocks of {f["block"]} |
-| Trained | {f["steps"]} steps on a CPU; best validation loss {f["best_val_loss"]:.4f} at step {f["best_step"]} |
+| Trained | {f["steps"]} steps on {"a GPU" if f.get("device") == "cuda" else "a CPU"}; best validation loss {f["best_val_loss"]:.4f} at step {f["best_step"]} |
 | Code | marola-dev/marola-ml at `{f["repo_commit"]}` (`sea/finetune_tucano.py`) |
 
 ## Use it

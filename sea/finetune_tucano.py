@@ -4,8 +4,8 @@
     python3 sea/finetune_tucano.py --self-test
 
 The base is downloaded from Hugging Face at BASE_REVISION into its own cache and never changed:
-only a LoRA adapter on the attention projections is trained, on the CPU, so it fits a
-GitHub-hosted runner (4 cores, 16 GB). The pinned corpus (`just corpus-fetch`, read the way
+only a LoRA adapter on the attention projections is trained, so it fits a GitHub-hosted CPU
+runner (4 cores, 16 GB); --device picks a CUDA GPU when there is one (pick_device). The pinned corpus (`just corpus-fetch`, read the way
 sea/prepare_corpus.py reads it) is tokenized with Tucano's tokenizer and cut into blocks of
 --block tokens; every tenth block is held out for validation. The adapter with the lowest
 validation loss is kept in --out, with train_state.json beside it (sea/package.py reads both).
@@ -39,7 +39,30 @@ def blocks(ids: list[int], size: int) -> tuple[list[list[int]], list[list[int]]]
     return train, val
 
 
-def train(steps: int, block: int, lr: float, eval_every: int, out: Path, corpus: Path) -> dict:
+def pick_device(want: str, cuda: bool) -> str:
+    """auto is cuda when a CUDA GPU is visible, else cpu; cuda without one is refused by name."""
+    if want not in ("auto", "cpu", "cuda"):
+        raise SystemExit(f"--device must be auto, cpu or cuda, not {want!r}")
+    if want == "cuda" and not cuda:
+        raise SystemExit(
+            "--device cuda: torch sees no CUDA GPU (a CPU-only torch, or no driver); "
+            "install torch from download.pytorch.org/whl/cu128, or use --device cpu"
+        )
+    return "cuda" if want == "auto" and cuda else ("cpu" if want == "auto" else want)
+
+
+def dtype_for(device: str):
+    """bf16, as Tucano was trained; float16 on a GPU older than Ampere, which has no bf16."""
+    import torch
+
+    if device == "cuda" and not torch.cuda.is_bf16_supported():
+        return torch.float16
+    return torch.bfloat16
+
+
+def train(
+    steps: int, block: int, lr: float, eval_every: int, out: Path, corpus: Path, device: str
+) -> dict:
     import torch
     from peft import LoraConfig, get_peft_model
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -48,13 +71,17 @@ def train(steps: int, block: int, lr: float, eval_every: int, out: Path, corpus:
     tok = AutoTokenizer.from_pretrained(BASE, revision=BASE_REVISION)
     ids = tok(read_corpus(corpus), add_special_tokens=False)["input_ids"]
     tr, va = blocks(ids, block)
-    model = AutoModelForCausalLM.from_pretrained(BASE, revision=BASE_REVISION, dtype=torch.bfloat16)
+    device = pick_device(device, torch.cuda.is_available())
+    model = AutoModelForCausalLM.from_pretrained(
+        BASE, revision=BASE_REVISION, dtype=dtype_for(device)
+    )
+    model = model.to(device)
     model = get_peft_model(model, LoraConfig(task_type="CAUSAL_LM", **LORA))
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr)
 
     def loss_of(batch: list[list[int]]) -> torch.Tensor:
-        x = torch.tensor(batch)
+        x = torch.tensor(batch, device=device)
         return model(input_ids=x, labels=x).loss
 
     def val_loss() -> float:
@@ -67,7 +94,7 @@ def train(steps: int, block: int, lr: float, eval_every: int, out: Path, corpus:
     best, best_step, t0 = val_loss(), 0, time.time()
     print(
         f"finetune_tucano: {len(ids)} tokens, {len(tr)}+{len(va)} blocks of {block}, "
-        f"{trainable:,} trainable; step 0 val {best:.4f}",
+        f"{trainable:,} trainable, on {device}; step 0 val {best:.4f}",
         file=sys.stderr,
     )
     model.train()
@@ -97,6 +124,7 @@ def train(steps: int, block: int, lr: float, eval_every: int, out: Path, corpus:
         "tokens": len(ids),
         "block": block,
         "trainable_params": trainable,
+        "device": device,
         "seconds": round(time.time() - t0),
     }
     (out / "train_state.json").write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
@@ -123,6 +151,18 @@ def self_test() -> int:
     except SystemExit:
         ok(True, "fewer than two blocks is refused")
     ok(len(BASE_REVISION) == 40, "the base is pinned to a commit")
+    ok(pick_device("auto", True) == "cuda", "auto takes the GPU when there is one")
+    ok(pick_device("auto", False) == "cpu", "auto falls back to the CPU")
+    ok(pick_device("cpu", True) == "cpu", "cpu stays on the CPU even with a GPU")
+    for want, cuda, label in (
+        ("cuda", False, "cuda without a GPU is refused"),
+        ("mps", True, "an unknown device is refused"),
+    ):
+        try:
+            pick_device(want, cuda)
+            ok(False, label)
+        except SystemExit:
+            ok(True, label)
     print("finetune_tucano self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
     return 1 if fails else 0
 
@@ -137,11 +177,12 @@ def main() -> int:
     ap.add_argument("--eval-every", type=int, default=25)
     ap.add_argument("--out", type=Path, default=OUT)
     ap.add_argument("--corpus", type=Path, default=CORPUS)
+    ap.add_argument("--device", default="auto", help="auto (a CUDA GPU if any), cpu or cuda")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
-    s = train(a.steps, a.block, a.lr, a.eval_every, a.out, a.corpus)
+    s = train(a.steps, a.block, a.lr, a.eval_every, a.out, a.corpus, a.device)
     print(
         f"finetune_tucano: best val loss {s['best_val_loss']} at step {s['best_step']} "
         f"of {s['steps']} ({s['seconds']}s) -> {a.out}"

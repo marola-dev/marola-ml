@@ -67,7 +67,7 @@ finetune-publish repo gguf base *args:
 # marola-gpt: the pinned marola-corpus, unpacked into .tmp/knowledge.
 marola-gpt-prepare: corpus-fetch
 
-# marola-gpt: train the LoRA adapter into sea/out-marola-gpt (sea/finetune_tucano.py; --steps N, --lr X).
+# marola-gpt: train the LoRA adapter into sea/out-marola-gpt (sea/finetune_tucano.py; --steps N, --lr X, --device auto|cpu|cuda).
 marola-gpt-train *args="": corpus-fetch
     ${SEA_PYTHON:-python3} sea/finetune_tucano.py {{ args }}
 
@@ -88,7 +88,7 @@ marola-gpt version: marola-gpt-train
     just marola-gpt-package {{ version }}
     just marola-gpt-publish {{ version }}
 
-# marola-gpt: give the published model a prompt and print how it continues it (h0ffmann/marola-gpt; --version X.Y.Z, --tokens N).
+# marola-gpt: give the published model a prompt and print how it continues it (h0ffmann/marola-gpt; --version X.Y.Z, --tokens N, --device auto|cpu|cuda).
 marola-gpt-ask prompt *args="":
     ${SEA_PYTHON:-python3} sea/ask.py "{{ prompt }}" {{ args }}
 
