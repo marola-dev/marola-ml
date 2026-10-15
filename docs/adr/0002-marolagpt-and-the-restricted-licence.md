@@ -1,4 +1,4 @@
-# ADR 0002: the model is marola-gpt, and marola-ml's licence restricts it to marola
+# ADR-0002: the model is marola-gpt, and marola-ml's licence restricts it to marola
 
 | | |
 |---|---|

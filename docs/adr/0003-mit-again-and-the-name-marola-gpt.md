@@ -1,4 +1,4 @@
-# ADR 0003: marola-ml is MIT again, and the model is marola-gpt
+# ADR-0003: marola-ml is MIT again, and the model is marola-gpt
 
 | | |
 |---|---|
