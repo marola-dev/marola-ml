@@ -8,7 +8,8 @@
 
 [![ci](https://img.shields.io/github/actions/workflow/status/marola-dev/marola-ml/ci.yml?branch=main&label=ci&style=flat-square)](https://github.com/marola-dev/marola-ml/actions/workflows/ci.yml)
 [![fork of nanoGPT](https://img.shields.io/badge/fork%20of-karpathy%2FnanoGPT%20%403adf61e-1682D4?style=flat-square)](https://github.com/karpathy/nanoGPT/tree/3adf61e154c3fe3fca428ad6bc3818b27a3b8291)
-[![marola-gpt: an educational SLM](https://img.shields.io/badge/marola-gpt-educational%20SLM-F2B705?style=flat-square)](#marola-gpt)
+[![marola-gpt: an educational SLM](https://img.shields.io/badge/marola--gpt-educational%20SLM-F2B705?style=flat-square)](#marola-gpt)
+[![Hugging Face: h0ffmann/marola-gpt](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-h0ffmann%2Fmarola--gpt-FFD21E?style=flat-square)](https://huggingface.co/h0ffmann/marola-gpt)
 [![licence: MIT](https://img.shields.io/badge/licence-MIT-1682D4?style=flat-square)](#licence)
 
 A fork of Andrej Karpathy's nanoGPT where [marola](https://github.com/marola-dev/marola) builds
@@ -26,10 +27,12 @@ It is marola's from the first weight: no base model is downloaded.
 | Release | Corpus | Model | Trained | Best validation loss |
 |---|---|---|---|---|
 | a local build, 2026-10-14 (not published) | v0.1.0: 15 080 characters, 87 distinct | 4 layers, 4 heads, width 128; 826 240 parameters | 1 000 steps on a CPU, 99.7 s | 2.4854 at step 600 |
+| [**0.0.1**](https://huggingface.co/h0ffmann/marola-gpt), 2026-10-15, on Hugging Face | v0.1.0 | the same | 1 000 steps on a GitHub-hosted CPU (`marola-gpt-publish.yml`, tag `marola-gpt-v0.0.1`) | 2.4854 at step 600: the local build, reproduced |
 
 Its text is word-shaped noise for now: the corpus is small enough to memorise, and the model
 overfits after step 600. That is the honest start of an educational model, not an assistant.
-Its text is never advice about the sea. **The first release on Hugging Face will be 0.0.1.**
+Its text is never advice about the sea. **Its first release, 0.0.1, is on Hugging Face:**
+[huggingface.co/h0ffmann/marola-gpt](https://huggingface.co/h0ffmann/marola-gpt) (15 October 2026).
 
 **Where it is distributed.** On Hugging Face at `huggingface.co/h0ffmann/marola-gpt`, under the
 owner's account for now (14 October 2026), public, under the MIT License like this repository.
