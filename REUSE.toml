@@ -1,0 +1,22 @@
+version = 1
+
+# Licence and copyright for every file, in one place, as the umbrella, h0ffmann's repositories and
+# the ouroboric-dev ones do: no per-file headers. Check with `reuse lint` (CI's `reuse` job).
+#
+# Trap: the marola-gpt weights from 0.1.0 on are Apache-2.0, Tucano-2b4's licence (ADR 0004), but
+# they are built into sea/release/ and never committed, and reuse skips LICENSE* files, so
+# sea/LICENSE-Tucano-2b4 (the text each release ships) cannot be annotated here and
+# LICENSES/Apache-2.0.txt would fail lint as unused. Add both when an Apache-2.0 file is committed.
+
+[[annotations]]
+path = ["**"]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 marola.dev"
+SPDX-License-Identifier = "MIT"
+
+# Copied from karpathy/nanoGPT at 3adf61e154c3 (sea/FORK.tsv); each file's header keeps the notice.
+[[annotations]]
+path = ["sea/nanogpt/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2022 Andrej Karpathy"
+SPDX-License-Identifier = "MIT"

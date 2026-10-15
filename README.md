@@ -231,6 +231,12 @@ release leva essa licença, dá crédito aos autores do Tucano e diz no model ca
 mudou: só um adaptador LoRA treinado no corpus do marola. A base não é redistribuída. As releases
 0.0.x, treinadas do zero, continuam MIT.
 
+O [`REUSE.toml`](REUSE.toml) diz a licença e o titular de cada arquivo, como no
+[umbrella](https://github.com/marola-dev/marola) e nos repositórios da
+[ouroboric-dev](https://github.com/ouroboric-dev), sem cabeçalho por arquivo; o
+[`LICENSES/`](LICENSES) tem os textos, e o CI roda `reuse lint`. Os pesos não entram no
+repositório, então o Apache-2.0 fica no `sea/LICENSE-Tucano-2b4` e em cada release.
+
 De 14 de outubro de 2026 até a volta ao MIT
 ([ADR 0003](docs/adr/0003-mit-again-and-the-name-marola-gpt.md)), o `main` teve uma licença
 restrita; nenhuma release saiu sob ela.
