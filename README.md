@@ -54,9 +54,29 @@ just marola-gpt-ask "Correntes de retorno são" --version 0.1.0 --tokens 200 --t
 
 O marola-gpt não é um modelo de chat: ele continua o texto que recebe. `just marola-gpt-ask` baixa
 a release do Hugging Face na tag dela, confere cada arquivo contra o `CHECKSUMS` da release, baixa
-o Tucano-2b4 (cerca de 4,9 GB, só na primeira vez) e roda os dois na CPU. Tudo fica no cache do
-próprio Hugging Face (`~/.cache/huggingface`). Precisa de uns 10 GB de RAM. As releases 0.0.x são
-do nanoGPT e são recusadas por nome.
+o Tucano-2b4 (cerca de 4,9 GB, só na primeira vez) e roda os dois. Tudo fica no cache do próprio
+Hugging Face (`~/.cache/huggingface`). As releases 0.0.x são do nanoGPT e são recusadas por nome.
+
+### GPU ou CPU
+
+Gerar texto e treinar rodam nos dois, com `--device`:
+
+| `--device` | Onde roda |
+|---|---|
+| `auto` (o padrão) | na GPU CUDA, se o torch enxergar uma; senão, na CPU |
+| `cuda` | na GPU, e falha com uma mensagem clara se não houver |
+| `cpu` | na CPU, mesmo com GPU |
+
+```bash
+just marola-gpt-ask "A água-viva" --device cpu
+just marola-gpt-train --device cuda --steps 300
+```
+
+Na CPU, o modelo pede uns 10 GB de RAM. Na GPU, a estimativa (não medida: este ambiente não tem GPU) é de uns 6 GB de memória de vídeo para gerar e uns 8 GB para treinar. Precisa também de
+um torch com CUDA (`pip install torch --index-url https://download.pytorch.org/whl/cu128`), não da
+build só de CPU. Os pesos vão em bf16, como o Tucano foi treinado; numa GPU anterior à Ampere, que
+não tem bf16, vão em float16. O `marola-gpt-publish.yml` sempre treina na CPU do runner hospedado,
+com `--device cpu`, então a publicação não muda de custo.
 
 ## Do corpus ao Hugging Face
 
@@ -112,7 +132,7 @@ just marola-gpt-publish 0.1.0 --yes     # 4. o upload para h0ffmann/marola-gpt, 
 just marola-gpt 0.1.0                   # os passos 1 a 3 de uma vez, terminando no dry run
 ```
 
-`just marola-gpt-train --steps 300 --lr 1e-4` muda o treino. Use a mesma versão de uma tag
+`just marola-gpt-train --steps 300 --lr 1e-4` muda o treino, e `--device cuda` treina na GPU ([GPU ou CPU](#gpu-ou-cpu)). Use a mesma versão de uma tag
 `marola-gpt-v*` quando a release precisar bater com ela, e rode a partir do checkout dessa tag
 para o model card citar o commit certo. O workflow também roda à mão (Actions → "marola-gpt
 publish"): é um dry run, a menos que você desmarque `dry_run`.

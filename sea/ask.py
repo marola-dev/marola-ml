@@ -8,7 +8,7 @@
 marola-gpt is not a chat model: it continues the text it is given. A release on h0ffmann/marola-gpt
 (sea/publish_hf.py's REPO) is a LoRA adapter; this downloads it at its tag v<version>, checks every
 file against the release's CHECKSUMS, downloads the base (sea/finetune_tucano.py's BASE at
-BASE_REVISION) and runs both on the CPU. Both land in Hugging Face's own cache
+BASE_REVISION) and runs both on a CUDA GPU when there is one, else on the CPU (--device). Both land in Hugging Face's own cache
 (~/.cache/huggingface, or HF_HOME), so a second call does not download again. Needs torch,
 transformers, peft and huggingface_hub (sea/requirements.txt).
 """
@@ -22,7 +22,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from finetune_tucano import BASE, BASE_REVISION  # noqa: E402
+from finetune_tucano import BASE, BASE_REVISION, dtype_for, pick_device  # noqa: E402
 from publish_hf import FILES, REPO, verify  # noqa: E402
 
 
@@ -52,7 +52,13 @@ def download(repo: str, version: str | None) -> tuple[Path, str]:
 
 
 def generate(
-    adapter: Path, prompt: str, tokens: int, temperature: float, top_k: int, seed: int
+    adapter: Path,
+    prompt: str,
+    tokens: int,
+    temperature: float,
+    top_k: int,
+    seed: int,
+    device: str = "auto",
 ) -> str:
     if not prompt:
         raise SystemExit("ask: give a prompt to continue")
@@ -61,10 +67,14 @@ def generate(
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     tok = AutoTokenizer.from_pretrained(BASE, revision=BASE_REVISION)
-    base = AutoModelForCausalLM.from_pretrained(BASE, revision=BASE_REVISION, dtype=torch.bfloat16)
-    model = PeftModel.from_pretrained(base, str(adapter)).eval()
+    device = pick_device(device, torch.cuda.is_available())
+    base = AutoModelForCausalLM.from_pretrained(
+        BASE, revision=BASE_REVISION, dtype=dtype_for(device)
+    )
+    model = PeftModel.from_pretrained(base, str(adapter)).to(device).eval()
+    print(f"ask: on {device}", file=sys.stderr)
     torch.manual_seed(seed)
-    ids = tok(prompt, return_tensors="pt")
+    ids = tok(prompt, return_tensors="pt").to(device)
     with torch.no_grad():
         out = model.generate(
             **ids,
@@ -118,6 +128,7 @@ def main() -> int:
     ap.add_argument("--temperature", type=float, default=0.8)
     ap.add_argument("--top-k", type=int, default=50)
     ap.add_argument("--seed", type=int, default=1337)
+    ap.add_argument("--device", default="auto", help="auto (a CUDA GPU if any), cpu or cuda")
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
@@ -130,7 +141,7 @@ def main() -> int:
         adapter, version = download(a.repo, a.version)
         label = f"{version} from huggingface.co/{a.repo}"
     print(f"ask: marola-gpt {label}, on {BASE}", file=sys.stderr)
-    print(generate(adapter, a.prompt, a.tokens, a.temperature, a.top_k, a.seed))
+    print(generate(adapter, a.prompt, a.tokens, a.temperature, a.top_k, a.seed, a.device))
     return 0
 
 
