@@ -89,6 +89,10 @@ marola-gpt version: marola-gpt-prepare marola-gpt-train
     just marola-gpt-package {{ version }}
     just marola-gpt-publish {{ version }}
 
+# marola-gpt: give the published model a prompt and print how it continues it (h0ffmann/marola-gpt; --version X.Y.Z, --tokens N).
+marola-gpt-ask prompt *args="":
+    ${SEA_PYTHON:-python3} sea/ask.py "{{ prompt }}" {{ args }}
+
 # marola-gpt release: tag main as marola-gpt-vX.Y.Z (next patch by default) and push it; the tag publishes via CD.
 sea-release *args="":
     scripts/sea-release.sh {{ args }}
@@ -177,6 +181,7 @@ quality: corpus-fetch resources-fetch
     python3 sea/fork_check.py
     python3 sea/package.py --self-test
     python3 sea/publish_hf.py --self-test
+    python3 sea/ask.py --self-test
     workflow-runners
     agents-check
     docs-lint
