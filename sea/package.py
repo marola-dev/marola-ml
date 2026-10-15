@@ -1,12 +1,12 @@
-"""package: one marolaGPT release, ready to publish, from a trained checkpoint.
+"""package: one marola-gpt release, ready to publish, from a trained checkpoint.
 
-    python3 sea/package.py --version 0.1.0 [--ckpt sea/nanogpt/out-marolagpt/ckpt.pt]
+    python3 sea/package.py --version 0.0.1 [--ckpt sea/nanogpt/out-marola-gpt/ckpt.pt]
     python3 sea/package.py --self-test
 
-Writes sea/release/marolaGPT-<version>/:
+Writes sea/release/marola-gpt-<version>/:
   model.pt     the weights, the model's shape and its dataset's name, no optimizer state
   meta.pkl     the character vocabulary (sea/nanogpt/data/marola_corpus/meta.pkl)
-  LICENSE      marola-ml's licence, which restricts the model's distribution (../../LICENSE)
+  LICENSE      marola-ml's MIT License (../../LICENSE)
   README.md    the model card: what it is, how it was made, its numbers, its licence
   CHECKSUMS    sha256 of every other file, sha256sum's format
 The provenance it states is read, never typed: the corpus version (corpus.version), the nanoGPT
@@ -24,10 +24,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SEA = ROOT / "sea"
-CKPT = SEA / "nanogpt" / "out-marolagpt" / "ckpt.pt"
+CKPT = SEA / "nanogpt" / "out-marola-gpt" / "ckpt.pt"
 META = SEA / "nanogpt" / "data" / "marola_corpus" / "meta.pkl"
-NAME = "marolaGPT"
-HF_REPO = "h0ffmann/marolaGPT"
+NAME = "marola-gpt"
+HF_REPO = "h0ffmann/marola-gpt"
 
 
 def nanogpt_commit(fork_tsv: Path) -> str:
@@ -46,9 +46,7 @@ def repo_commit() -> str:
 
 def card(version: str, facts: dict) -> str:
     return f"""---
-license: other
-license_name: marola-ml-restricted
-license_link: LICENSE
+license: mit
 tags: [marola, nanogpt, character-level, small-language-model, educational]
 ---
 
@@ -69,15 +67,13 @@ scratch. It is not an assistant, and its text is not advice about the sea.
 
 ## Use it
 
-Inside a checkout of marola-dev/marola-ml: put `model.pt` at `sea/nanogpt/out-marolagpt/ckpt.pt`
-and `meta.pkl` at `sea/nanogpt/data/marola_corpus/meta.pkl`, then `just marolagpt-sample`.
+Inside a checkout of marola-dev/marola-ml: put `model.pt` at `sea/nanogpt/out-marola-gpt/ckpt.pt`
+and `meta.pkl` at `sea/nanogpt/data/marola_corpus/meta.pkl`, then `just marola-gpt-sample`.
 
 ## Licence
 
-Restricted: see `LICENSE`. {NAME} may be used by marola's contributors. It may not be
-redistributed outside marola-dev's own channels: this repository is one of them while the owner
-keeps it as the official one. The code it was trained with that came from nanoGPT stays under
-nanoGPT's MIT License (Copyright (c) 2022 Andrej Karpathy).
+MIT (`LICENSE`, Copyright (c) 2026 marola.dev). The code {NAME} was trained with that came from
+nanoGPT is under nanoGPT's own MIT License (Copyright (c) 2022 Andrej Karpathy).
 
 ## Credits
 
@@ -158,7 +154,7 @@ def self_test() -> int:
     f = facts_from(ckpt, "v0.1.0", "3adf61e154c3fe", "abc")
     ok(f["params"] == 100, "the causal-mask buffers are not counted as parameters")
     c = card("0.1.0", f)
-    ok("license: other" in c and "Restricted" in c, "the card states the restricted licence")
+    ok("license: mit" in c and "MIT" in c, "the card states the MIT licence")
     ok(
         "best validation loss 2.4854" in c and "marola-corpus v0.1.0" in c,
         "the card's numbers are the checkpoint's",
@@ -166,7 +162,7 @@ def self_test() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         t = Path(tmp)
         (t / "meta.pkl").write_bytes(b"m")
-        (t / "LICENSE").write_text("restricted\n", encoding="utf-8")
+        (t / "LICENSE").write_text("MIT License\n", encoding="utf-8")
         files = write(
             t / "rel",
             "0.1.0",

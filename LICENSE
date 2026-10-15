@@ -1,32 +1,21 @@
-marola-ml Restricted License, version 1, 14 October 2026
+MIT License
 
-Copyright (c) 2026 marola.dev and the contributors of marola-dev/marola-ml.
-All rights reserved, except as granted below.
+Copyright (c) 2026 marola.dev
 
-1. What this covers. Everything in the repository marola-dev/marola-ml, and every model trained
-   with it, including marolaGPT in any form (weights, checkpoints, releases), except the parts that
-   state another licence. The code in sea/nanogpt/ was copied from karpathy/nanoGPT and stays
-   under its MIT License (Copyright (c) 2022 Andrej Karpathy, sea/nanogpt/LICENSE); nothing here
-   limits the rights that licence gives.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-2. Who may use it. The contributors of marola-dev, meaning the members of the GitHub organisation
-   marola-dev and anyone the copyright holder authorises in writing, may use, copy and modify this
-   work for marola's purposes, inside marola-dev's repositories.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-3. Everyone else. You may read this repository on GitHub and cite it. You may not copy, modify,
-   distribute or sublicense it, or use it to train another model, without written permission of
-   the copyright holder.
-
-4. marolaGPT. marolaGPT is an educational small language model. It may not be distributed by
-   anyone outside marola-dev's official channels: the marola-dev GitHub organisation, and the
-   Hugging Face repository that this repository's README names as marolaGPT's, which is
-   h0ffmann/marolaGPT on the date of this licence. A copy of marolaGPT found anywhere else is not
-   distributed by marola, and this licence gives no right to it.
-
-5. Earlier versions. A version of this repository published before this licence keeps the licence
-   it was published with (MIT, Copyright (c) 2026 marola.dev).
-
-6. No warranty. This work and marolaGPT are provided "as is", without warranty of any kind,
-   express or implied. Their text is not advice about the sea or about safety. In no event shall
-   the authors or copyright holders be liable for any claim, damages or other liability arising
-   from them or from their use.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

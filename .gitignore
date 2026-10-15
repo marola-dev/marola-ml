@@ -12,7 +12,7 @@ dspy/.venv/
 !/finetune/data/.gitkeep
 /finetune/out/*
 !/finetune/out/.gitkeep
-# marolaGPT's dataset, checkpoints and releases (`just marolagpt <version>`)
+# marola-gpt's dataset, checkpoints and releases (`just marola-gpt <version>`)
 /sea/nanogpt/data/marola_corpus/
 /sea/nanogpt/out-*/
 /sea/release/
