@@ -1,4 +1,4 @@
-# ADR 0001: marola-sea is built from karpathy/nanoGPT, copied as is
+# ADR-0001: marola-sea is built from karpathy/nanoGPT, copied as is
 
 | | |
 |---|---|
