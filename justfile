@@ -60,23 +60,22 @@ finetune-publish repo gguf base *args:
 
 # Create/update the venv marola-sea trains in — labs/cuda's setup-ml-venv; call its
 # bin/python-cuda afterwards, never bin/python.
-# marola-gpt, marola's own small language model, built from karpathy/nanoGPT copied into sea/nanogpt
-# (docs/adr/0001, 0002). The chain: corpus -> dataset -> training -> release -> Hugging Face.
-# SEA_PYTHON is a Python with sea/requirements.txt installed (default python3).
+# marola-gpt, marola's own small language model: a LoRA adapter on TucanoBR/Tucano-2b4 (Apache-2.0),
+# trained on the pinned marola-corpus (docs/adr/0004). The chain: corpus -> LoRA -> release -> Hugging Face.
+# SEA_PYTHON is a Python with sea/requirements.txt installed (default python3). sea/nanogpt keeps 0.0.x's code.
 
-# marola-gpt: the pinned marola-corpus as a character-level dataset for nanoGPT.
+# marola-gpt: the pinned marola-corpus, unpacked into .tmp/knowledge.
 marola-gpt-prepare: corpus-fetch
-    ${SEA_PYTHON:-python3} sea/prepare_corpus.py
 
-# marola-gpt: train from random weights (sea/config/train_marola_gpt.py; --key=value overrides).
-marola-gpt-train *args="":
-    cd sea/nanogpt && ${SEA_PYTHON:-python3} train.py ../config/train_marola_gpt.py {{ args }}
+# marola-gpt: train the LoRA adapter into sea/out-marola-gpt (sea/finetune_tucano.py; --steps N, --lr X).
+marola-gpt-train *args="": corpus-fetch
+    ${SEA_PYTHON:-python3} sea/finetune_tucano.py {{ args }}
 
-# marola-gpt: sample text from the best checkpoint.
-marola-gpt-sample *args="":
-    cd sea/nanogpt && ${SEA_PYTHON:-python3} sample.py --out_dir=out-marola-gpt --device=cpu --num_samples=1 --max_new_tokens=300 {{ args }}
+# marola-gpt: continue a prompt with the adapter just trained, before it is a release.
+marola-gpt-sample prompt="A água-viva" *args="":
+    ${SEA_PYTHON:-python3} sea/ask.py "{{ prompt }}" --adapter sea/out-marola-gpt {{ args }}
 
-# marola-gpt: the release directory sea/release/marola-gpt-<version>/ (weights, vocabulary, card, licence, checksums).
+# marola-gpt: the release directory sea/release/marola-gpt-<version>/ (adapter, licence, card, checksums).
 marola-gpt-package version:
     ${SEA_PYTHON:-python3} sea/package.py --version {{ version }}
 
@@ -85,7 +84,7 @@ marola-gpt-publish version *args="":
     ${SEA_PYTHON:-python3} sea/publish_hf.py --version {{ version }} {{ args }}
 
 # marola-gpt: the whole chain up to the release directory, then a dry run of the upload.
-marola-gpt version: marola-gpt-prepare marola-gpt-train
+marola-gpt version: marola-gpt-train
     just marola-gpt-package {{ version }}
     just marola-gpt-publish {{ version }}
 
@@ -177,6 +176,7 @@ quality: corpus-fetch resources-fetch
     python3 finetune/build_dataset.py --self-test
     python3 finetune/build_dpo_dataset.py --self-test
     python3 sea/prepare_corpus.py --self-test
+    python3 sea/finetune_tucano.py --self-test
     python3 sea/fork_check.py --self-test
     python3 sea/fork_check.py
     python3 sea/package.py --self-test

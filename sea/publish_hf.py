@@ -5,7 +5,7 @@
     python3 sea/publish_hf.py --self-test
 
 The repository is h0ffmann/marola-gpt for now (the owner, 14 October 2026), created public when it
-does not exist: marola-gpt is MIT, distributed openly (--private creates it private instead). The upload is one commit
+does not exist: marola-gpt is distributed openly, under Tucano-2b4's Apache-2.0 (--private creates it private instead). The upload is one commit
 named "marola-gpt <version>" and tagged v<version>; an upload cannot be taken back, so without
 --yes nothing leaves this machine. CHECKSUMS is checked against the files before anything is sent.
 """
@@ -20,7 +20,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RELEASES = ROOT / "sea" / "release"
 REPO = "h0ffmann/marola-gpt"
-FILES = ("model.pt", "meta.pkl", "LICENSE", "README.md", "CHECKSUMS")
+FILES = (
+    "adapter_config.json",
+    "adapter_model.safetensors",
+    "LICENSE",
+    "README.md",
+    "CHECKSUMS",
+)
 
 
 def verify(release: Path) -> list[str]:
@@ -64,13 +70,13 @@ def self_test() -> int:
             encoding="utf-8",
         )
         ok(verify(r) == [], "a release whose files match CHECKSUMS passes")
-        (r / "model.pt").write_text("changed", encoding="utf-8")
+        (r / "adapter_model.safetensors").write_text("changed", encoding="utf-8")
         ok(
-            verify(r) == ["model.pt does not match CHECKSUMS"],
+            verify(r) == ["adapter_model.safetensors does not match CHECKSUMS"],
             "a changed file is refused before upload",
         )
-        (r / "meta.pkl").unlink()
-        ok("meta.pkl is missing" in verify(r), "a missing file is refused")
+        (r / "adapter_config.json").unlink()
+        ok("adapter_config.json is missing" in verify(r), "a missing file is refused")
 
         calls = []
 

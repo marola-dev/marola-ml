@@ -1,7 +1,11 @@
-# marola-gpt (sea/): what nanoGPT's train.py and sample.py import, and the Hugging Face upload. Loosely pinned, like
+# marola-gpt (sea/): the LoRA training on Tucano-2b4, ask, and the Hugging Face upload; nanoGPT's
+# train.py and sample.py (0.0.x) need only torch, numpy and tiktoken. Loosely pinned, like
 # finetune/requirements.txt; on a CPU-only machine install torch from
-# https://download.pytorch.org/whl/cpu. Checked on 2026-10-14 with torch 2.7.1 (CPU).
+# https://download.pytorch.org/whl/cpu. Checked on 2026-10-15 with torch 2.14.1 (CPU),
+# transformers 5.20.0 and peft 0.21.2.
 torch>=2.7
 numpy>=1.26
-tiktoken>=0.7  # sample.py imports it even for a character-level model
-huggingface_hub>=0.26  # sea/publish_hf.py, the upload only
+tiktoken>=0.7  # nanoGPT's sample.py imports it even for a character-level model
+transformers>=4.56  # from_pretrained(dtype=...)
+peft>=0.17
+huggingface_hub>=0.26

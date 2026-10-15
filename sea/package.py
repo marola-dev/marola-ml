@@ -1,21 +1,21 @@
-"""package: one marola-gpt release, ready to publish, from a trained checkpoint.
+"""package: one marola-gpt release, ready to publish, from a trained LoRA adapter.
 
-    python3 sea/package.py --version 0.0.1 [--ckpt sea/nanogpt/out-marola-gpt/ckpt.pt]
+    python3 sea/package.py --version 0.1.0 [--adapter sea/out-marola-gpt]
     python3 sea/package.py --self-test
 
 Writes sea/release/marola-gpt-<version>/:
-  model.pt     the weights, the model's shape and its dataset's name, no optimizer state
-  meta.pkl     the character vocabulary (sea/nanogpt/data/marola_corpus/meta.pkl)
-  LICENSE      marola-ml's MIT License (../../LICENSE)
-  README.md    the model card: what it is, how it was made, its numbers, its licence
+  adapter_config.json, adapter_model.safetensors   the LoRA adapter (sea/finetune_tucano.py)
+  LICENSE      Apache-2.0, Tucano-2b4's own (sea/LICENSE-Tucano-2b4), which the weights carry
+  README.md    the model card: the base, how it was changed, its numbers, its licence, credits
   CHECKSUMS    sha256 of every other file, sha256sum's format
-The provenance it states is read, never typed: the corpus version (corpus.version), the nanoGPT
-commit (sea/FORK.tsv), this repository's commit, and the iteration and validation loss the
-checkpoint holds. torch is needed to read the checkpoint, not for the self-test.
+The provenance it states is read, never typed: the base and its revision, the training numbers
+(the adapter's train_state.json), the corpus version (corpus.version) and this repository's commit.
+Standard library only.
 """
 
 import argparse
 import hashlib
+import json
 import shutil
 import subprocess
 import sys
@@ -24,17 +24,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SEA = ROOT / "sea"
-CKPT = SEA / "nanogpt" / "out-marola-gpt" / "ckpt.pt"
-META = SEA / "nanogpt" / "data" / "marola_corpus" / "meta.pkl"
+ADAPTER = SEA / "out-marola-gpt"
+LICENCE = SEA / "LICENSE-Tucano-2b4"
 NAME = "marola-gpt"
-HF_REPO = "h0ffmann/marola-gpt"
-
-
-def nanogpt_commit(fork_tsv: Path) -> str:
-    for line in fork_tsv.read_text(encoding="utf-8").splitlines():
-        if line.startswith("# Forked on ") and " at commit " in line:
-            return line.split(" at commit ")[1].split()[0]
-    raise SystemExit(f"package: no 'at commit' line in {fork_tsv}")
+WEIGHTS = ("adapter_config.json", "adapter_model.safetensors")
 
 
 def repo_commit() -> str:
@@ -44,41 +37,55 @@ def repo_commit() -> str:
     return r.stdout.strip() or "unknown"
 
 
-def card(version: str, facts: dict) -> str:
+def card(version: str, f: dict) -> str:
     return f"""---
-license: mit
-tags: [marola, nanogpt, character-level, small-language-model, educational]
+license: apache-2.0
+language: [pt]
+base_model: {f["base"]}
+library_name: peft
+tags: [marola, lora, tucano, portuguese, educational]
 ---
 
 # {NAME} {version}
 
-A small language model that marola trains from random weights on its own corpus of sourced ocean
-and marine-safety notes. An educational model: it shows how a GPT learns a small domain from
-scratch. It is not an assistant, and its text is not advice about the sea.
+marola's small language model: a LoRA adapter on [{f["base"]}](https://huggingface.co/{f["base"]})
+(revision `{f["base_revision"][:12]}`), trained on marola's corpus of sourced ocean and
+marine-safety notes. It continues text, mostly in Portuguese; it is not an assistant, and its text
+is not advice about the sea.
 
 | | |
 |---|---|
-| Architecture | nanoGPT (Andrej Karpathy, MIT), character level: {facts["n_layer"]} layers, {facts["n_head"]} heads, width {facts["n_embd"]}, context {facts["block_size"]} |
-| Parameters | {facts["params"]:,} |
-| Vocabulary | {facts["vocab_size"]} characters |
-| Training data | marola-corpus {facts["corpus"]} |
-| Trained | {facts["iter_num"]} iterations; best validation loss {facts["best_val_loss"]:.4f} |
-| Code | marola-dev/marola-ml at `{facts["repo_commit"]}`; nanoGPT at `{facts["nanogpt"][:12]}` |
+| Base | {f["base"]} at `{f["base_revision"]}` (Apache-2.0), unchanged |
+| Change | LoRA r={f["lora"]["r"]}, alpha={f["lora"]["lora_alpha"]} on {", ".join(f["lora"]["target_modules"])}: {f["trainable_params"]:,} trainable parameters |
+| Training data | marola-corpus {f["corpus"]}: {f["tokens"]:,} tokens, blocks of {f["block"]} |
+| Trained | {f["steps"]} steps on a CPU; best validation loss {f["best_val_loss"]:.4f} at step {f["best_step"]} |
+| Code | marola-dev/marola-ml at `{f["repo_commit"]}` (`sea/finetune_tucano.py`) |
 
 ## Use it
 
-Inside a checkout of marola-dev/marola-ml: put `model.pt` at `sea/nanogpt/out-marola-gpt/ckpt.pt`
-and `meta.pkl` at `sea/nanogpt/data/marola_corpus/meta.pkl`, then `just marola-gpt-sample`.
+```python
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+tok = AutoTokenizer.from_pretrained("{f["base"]}", revision="{f["base_revision"]}")
+base = AutoModelForCausalLM.from_pretrained("{f["base"]}", revision="{f["base_revision"]}")
+model = PeftModel.from_pretrained(base, "h0ffmann/marola-gpt", revision="v{version}")
+```
+
+Or, in a checkout of marola-dev/marola-ml: `just marola-gpt-ask "A água-viva" --version {version}`.
 
 ## Licence
 
-MIT (`LICENSE`, Copyright (c) 2026 marola.dev). The code {NAME} was trained with that came from
-nanoGPT is under nanoGPT's own MIT License (Copyright (c) 2022 Andrej Karpathy).
+Apache License 2.0 (`LICENSE`), the licence of Tucano-2b4, Copyright Nicholas Kluge Corrêa, Aniket
+Sen, Sophia Falk and Shiza Fatimah. **Modified by marola.dev:** this repository holds only a LoRA
+adapter trained by marola on its own corpus; the base weights are not redistributed here and are
+downloaded from {f["base"]} unchanged. The code that trained it is MIT (marola-dev/marola-ml).
 
 ## Credits
 
-Andrej Karpathy, for nanoGPT. Fabio Akita, whose microgpt gave marola the idea of a GPT trained
-from scratch on one machine.
+Nicholas Kluge Corrêa, Aniket Sen, Sophia Falk and Shiza Fatimah, for Tucano
+([doi:10.1016/j.patter.2025.101325](https://doi.org/10.1016/j.patter.2025.101325)).
+Andrej Karpathy, for nanoGPT, which marola-gpt 0.0.x was trained with.
 """
 
 
@@ -88,33 +95,16 @@ def checksums(files: list[Path]) -> str:
     )
 
 
-def facts_from(ckpt: dict, corpus: str, nanogpt: str, commit: str) -> dict:
-    args = ckpt["model_args"]
-    params = sum(t.numel() for k, t in ckpt["model"].items() if not k.endswith("attn.bias"))
-    return {
-        "n_layer": args["n_layer"],
-        "n_head": args["n_head"],
-        "n_embd": args["n_embd"],
-        "block_size": args["block_size"],
-        "vocab_size": args["vocab_size"],
-        "params": params,
-        "iter_num": ckpt.get("iter_num", 0),
-        "best_val_loss": float(ckpt.get("best_val_loss", float("nan"))),
-        "corpus": corpus,
-        "nanogpt": nanogpt,
-        "repo_commit": commit,
-    }
-
-
-def write(
-    out: Path, version: str, weights: dict, facts: dict, meta: Path, licence: Path, save
-) -> list[Path]:
+def write(out: Path, version: str, adapter: Path, facts: dict, licence: Path) -> list[Path]:
+    missing = [n for n in WEIGHTS if not (adapter / n).exists()]
+    if missing:
+        raise SystemExit(f"package: {adapter} has no {', '.join(missing)}: train it first")
     out.mkdir(parents=True, exist_ok=True)
-    save(weights, out / "model.pt")
-    shutil.copyfile(meta, out / "meta.pkl")
+    for n in WEIGHTS:
+        shutil.copyfile(adapter / n, out / n)
     shutil.copyfile(licence, out / "LICENSE")
     (out / "README.md").write_text(card(version, facts), encoding="utf-8")
-    files = [out / n for n in ("model.pt", "meta.pkl", "LICENSE", "README.md")]
+    files = [out / n for n in (*WEIGHTS, "LICENSE", "README.md")]
     (out / "CHECKSUMS").write_text(checksums(files), encoding="utf-8")
     return files + [out / "CHECKSUMS"]
 
@@ -128,58 +118,51 @@ def self_test() -> int:
         fails += 0 if cond else 1
 
     ok(
-        nanogpt_commit(SEA / "FORK.tsv").startswith("3adf61e154c3"),
-        "the nanoGPT commit is read from FORK.tsv",
+        LICENCE.read_text(encoding="utf-8").lstrip().startswith("Apache License"),
+        "the release carries Tucano's Apache-2.0 licence",
     )
-
-    class T:  # a stand-in for a tensor: only numel() is read
-        def __init__(self, n: int) -> None:
-            self.n = n
-
-        def numel(self) -> int:
-            return self.n
-
-    ckpt = {
-        "model": {"w": T(100), "h.0.attn.bias": T(9)},
-        "model_args": {
-            "n_layer": 4,
-            "n_head": 4,
-            "n_embd": 128,
-            "block_size": 128,
-            "vocab_size": 87,
-        },
-        "iter_num": 600,
-        "best_val_loss": 2.4854,
+    facts = {
+        "base": "TucanoBR/Tucano-2b4",
+        "base_revision": "b8def49a1931508a7cedc1f3fd6ff163515b0983",
+        "lora": {"r": 8, "lora_alpha": 16, "target_modules": ["q_proj", "v_proj"]},
+        "trainable_params": 1597440,
+        "tokens": 5005,
+        "block": 128,
+        "steps": 200,
+        "best_step": 150,
+        "best_val_loss": 2.5,
+        "corpus": "v0.1.0",
+        "repo_commit": "abc",
     }
-    f = facts_from(ckpt, "v0.1.0", "3adf61e154c3fe", "abc")
-    ok(f["params"] == 100, "the causal-mask buffers are not counted as parameters")
-    c = card("0.1.0", f)
-    ok("license: mit" in c and "MIT" in c, "the card states the MIT licence")
+    c = card("0.1.0", facts)
     ok(
-        "best validation loss 2.4854" in c and "marola-corpus v0.1.0" in c,
-        "the card's numbers are the checkpoint's",
+        "license: apache-2.0" in c and "base_model: TucanoBR/Tucano-2b4" in c,
+        "the card's front matter names the licence and the base",
+    )
+    ok("Modified by marola.dev" in c, "the card states the change, as Apache-2.0 asks")
+    ok(
+        "best validation loss 2.5000 at step 150" in c and "marola-corpus v0.1.0" in c,
+        "the card's numbers are the training's",
     )
     with tempfile.TemporaryDirectory() as tmp:
         t = Path(tmp)
-        (t / "meta.pkl").write_bytes(b"m")
-        (t / "LICENSE").write_text("MIT License\n", encoding="utf-8")
-        files = write(
-            t / "rel",
-            "0.1.0",
-            {"model": {}},
-            f,
-            t / "meta.pkl",
-            t / "LICENSE",
-            lambda obj, p: p.write_bytes(b"weights"),
-        )
-        names = sorted(p.name for p in files)
+        (t / "ad").mkdir()
+        try:
+            write(t / "rel", "0.1.0", t / "ad", facts, LICENCE)
+            ok(False, "an untrained adapter is refused")
+        except SystemExit:
+            ok(True, "an untrained adapter is refused")
+        for n in WEIGHTS:
+            (t / "ad" / n).write_bytes(n.encode())
+        files = write(t / "rel", "0.1.0", t / "ad", facts, LICENCE)
         ok(
-            names == ["CHECKSUMS", "LICENSE", "README.md", "meta.pkl", "model.pt"],
+            sorted(p.name for p in files)
+            == sorted([*WEIGHTS, "LICENSE", "README.md", "CHECKSUMS"]),
             "the release has its five files",
         )
         sums = (t / "rel" / "CHECKSUMS").read_text(encoding="utf-8")
         ok(
-            hashlib.sha256(b"weights").hexdigest() + "  model.pt" in sums,
+            hashlib.sha256(b"adapter_model.safetensors").hexdigest() in sums,
             "CHECKSUMS holds each file's sha256",
         )
     print("package self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
@@ -191,30 +174,20 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--version")
-    ap.add_argument("--ckpt", type=Path, default=CKPT)
+    ap.add_argument("--adapter", type=Path, default=ADAPTER)
     ap.add_argument("--self-test", action="store_true")
     a = ap.parse_args()
     if a.self_test:
         return self_test()
     if not a.version:
         ap.error("--version X.Y.Z is required")
-    import torch
-
-    ckpt = torch.load(a.ckpt, map_location="cpu", weights_only=False)
-    corpus = (ROOT / "corpus.version").read_text(encoding="utf-8").strip()
-    facts = facts_from(ckpt, corpus, nanogpt_commit(SEA / "FORK.tsv"), repo_commit())
+    facts = json.loads((a.adapter / "train_state.json").read_text(encoding="utf-8"))
+    facts["corpus"] = (ROOT / "corpus.version").read_text(encoding="utf-8").strip()
+    facts["repo_commit"] = repo_commit()
     out = SEA / "release" / f"{NAME}-{a.version}"
-    # sample.py finds the vocabulary through config["dataset"], so that one key is kept.
-    weights = {
-        "model": ckpt["model"],
-        "model_args": ckpt["model_args"],
-        "config": {"dataset": ckpt["config"]["dataset"]},
-        "iter_num": facts["iter_num"],
-        "best_val_loss": facts["best_val_loss"],
-    }
-    files = write(out, a.version, weights, facts, META, ROOT / "LICENSE", torch.save)
+    files = write(out, a.version, a.adapter, facts, LICENCE)
     print(
-        f"package: {NAME} {a.version}: {facts['params']:,} parameters, best val loss "
+        f"package: {NAME} {a.version}: LoRA on {facts['base']}, best val loss "
         f"{facts['best_val_loss']:.4f} -> {out} ({len(files)} files)"
     )
     return 0
