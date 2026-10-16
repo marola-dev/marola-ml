@@ -36,7 +36,10 @@ jobs:
       - name: marola-pr-bot is configured
         env:
           APP_ID: ${{ vars.PR_BOT_APP_ID }}
-        run: '[ -n "$APP_ID" ] || { echo "::error::vars.PR_BOT_APP_ID is not visible to this repo"; exit 1; }'
+          KEY: ${{ secrets.PR_BOT_KEY }}
+        run: |
+          [ -n "$APP_ID" ] || { echo "::error::vars.PR_BOT_APP_ID is not visible to this repo"; exit 1; }
+          [ -n "$KEY" ] || { echo "::error::secrets.PR_BOT_KEY is not visible to this repo"; exit 1; }
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
