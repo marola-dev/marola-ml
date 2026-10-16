@@ -10,8 +10,7 @@ call, with no Python in the runtime path. Both live in marola-app's
 - `review_prompt.json`: the reviewer/critic pass that grades the summarizer's own output and can
   replace it (`marola.llm.Reviewer`).
 
-See the [system architecture](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/) §5a
-(query synthesis) for why this exists and
+See marola-app's [query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis) for why this exists and
 [`compile_recommendation_prompt.py`](../dspy/compile_recommendation_prompt.py) for the actual
 program (both `dspy.Signature`s, both trainsets, both compile calls); this page is just the "how to
 run it" instructions.
@@ -151,9 +150,8 @@ needed once per shell before running `python compile_recommendation_prompt.py`, 
 
 The Scala-side loader (`marola.llm.CompiledPrompt`, `marola.llm.Reviewer`) exists and was run live
 against both compiled artifacts (`just run -- --summarize` in a marola-app checkout); see the
-[system architecture](https://docs.marola.dev/2-Building-marola/ARCHITECTURE/) §5a's own Status
-notes for the full detail, including one case where the reviewer correctly caught a
-deliberately-planted flaw in a draft summary.
+verified notes under marola-app's [query synthesis](https://docs.marola.dev/5-Repos/marola-app/1-design_integrations/#query-synthesis), including the
+bootstrap run where the reviewer caught a planted draft missing its jellyfish mention.
 
 `langfuse==4.15.1` + `openinference-instrumentation-dspy` are confirmed importable and the
 graceful-degradation path (credentials set, endpoint unreachable) was exercised directly, but the
