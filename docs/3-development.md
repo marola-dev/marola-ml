@@ -62,8 +62,7 @@ for yet.
 | Secret | Used by | For |
 |---|---|---|
 | `HF_TOKEN` | `marola-gpt-publish.yml` | a fine-grained Hugging Face token with write access to the model repo (`h0ffmann/marola-gpt` for marola-gpt); not set yet |
-| `PR_BOT_KEY` (with variable `PR_BOT_APP_ID`) | `compile-prompt.yml` | the PR in marola-app, opened as marola-pr-bot (MIP-0086) |
-| `MAROLA_CROSS_REPO_PAT` | `notify-umbrella.yml` | the umbrella dispatch (without it, a notice) |
+| `PR_BOT_KEY` (with variable `PR_BOT_APP_ID`) | `compile-prompt.yml`, `notify-umbrella.yml` | the PR in marola-app, opened as marola-pr-bot, and the umbrella dispatch (MIP-0086) |
 | `GITHUB_TOKEN` | `docker-local.yml` | pushing to ghcr.io, and pulling the app image, a private package that has to grant this repo read access |
 
 A local publish uses your own `huggingface-cli login`. No key goes in the repo.
