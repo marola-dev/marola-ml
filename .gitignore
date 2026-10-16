@@ -17,3 +17,22 @@ dspy/.venv/
 /sea/nanogpt/out-*/
 /sea/release/
 /sea/out-marola-gpt/
+# weights, token arrays and archives, wherever a run leaves them: a release goes to Hugging Face,
+# a dataset to .tmp/ or finetune/data/, never to git
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.gguf
+*.onnx
+*.npy
+*.npz
+*.arrow
+*.parquet
+*.tar
+*.tar.gz
+*.tgz
+*.zst
+*.zip
+wandb/
