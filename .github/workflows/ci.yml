@@ -65,6 +65,14 @@ jobs:
     with:
       devkit-ref: v0.12.0
 
+  # Licence and copyright of every file come from REUSE.toml and LICENSES/ (REUSE 3.3).
+  reuse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: pipx run reuse==5.0.2 lint
+
   # A called workflow's jobs can never exceed this; only its publish job writes (MIP-0074 §5.2).
   api-docs:
     uses: marola-dev/marola-devkit/.github/workflows/api-docs.yml@v0.12.0
@@ -77,7 +85,7 @@ jobs:
   # every run, so it needs every other job and passes on skipped ones.
   ci-ok:
     if: always()
-    needs: [static, python, runners, agents, api-docs]
+    needs: [static, python, runners, agents, reuse, api-docs]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
