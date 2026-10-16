@@ -182,6 +182,38 @@ just finetune-dataset   # o conjunto de treino do caminho Llama, a partir dos re
 just benchmark          # o --benchmark da imagem do app fixada, no seu Ollama, e depois o gate
 ```
 
+## Mapa do repositório
+
+```
+sea/             o marola-gpt: corpus, treino LoRA sobre o Tucano, release, upload, ask
+sea/nanogpt/     o nanoGPT de Andrej Karpathy, o código da 0.0.x, conferido por sea/fork_check.py
+dspy/            a compilação dos prompts que o app reproduz
+finetune/        o caminho Llama 3.2: Modelfile, QLoRA + DPO, datasets, merge e export
+scripts/         o gate de benchmark, os fetches fixados, a release por tag
+docs/            design, bibliotecas, desenvolvimento, ADRs e as rodadas de benchmark guardadas
+```
+
+Para entender o marola-gpt, leia nesta ordem; cada script diz para que serve nas primeiras
+linhas e tem um `--self-test` que roda só com a biblioteca padrão:
+
+| Passo | Arquivo | O que se aprende |
+|---|---|---|
+| 1 | `sea/prepare_corpus.py` | das notas do corpus ao texto de treino |
+| 2 | `sea/finetune_tucano.py` | a base fixada, o LoRA, o dispositivo, a perda de validação |
+| 3 | `sea/ask.py` | como o adaptador continua um texto, e a conferência dos checksums |
+| 4 | `sea/package.py`, `sea/publish_hf.py` | o que uma release leva, e o upload que não tem volta |
+
+`just quality` roda todos os gates do CI, os self-tests incluídos, sem GPU e sem baixar o Tucano.
+
+## Dados e pesos fora do git
+
+O corpus, os recursos do app e os datasets de treino ficam em `.tmp/` e `finetune/data/`; os
+adaptadores, checkpoints e releases, em `sea/out-*/`, `sea/release/` e `finetune/out/`. O
+`.gitignore` recusa também, em qualquer pasta, os formatos de pesos, arrays e pacotes (`*.pt`,
+`*.safetensors`, `*.gguf`, `*.npy`, `*.tar.gz` e afins), para um checkpoint perdido não entrar
+num commit. O git guarda o que é pequeno e se revisa: código, configurações, as rodadas de
+benchmark e os checksums. Uma release vai para o Hugging Face.
+
 ## Contratos
 
 Releases fixadas, nunca a árvore de outro repositório: a imagem do app (`marola-image`), o tarball
@@ -235,6 +267,8 @@ do devkit.
   [microgpt](https://github.com/akitaonrails/microgpt) deu ao marola a ideia de um GPT treinado do
   zero numa máquina só, medido com honestidade. Nenhum código dele está aqui: no dia do fork ele
   não tinha licença ([marola-site#146](https://github.com/marola-dev/marola-site/issues/146)).
+  O mapa do repositório com ordem de leitura e os pesos barrados no `.gitignore` em qualquer pasta
+  seguem a organização que ele deu ao microgpt em 14 de outubro de 2026; as ideias, não o texto.
 - O layout desta página segue o do
   [marola-research](https://github.com/marola-dev/marola-research). O desenho no topo é original,
   feito para este repositório.
