@@ -41,7 +41,10 @@
       "Bash(gh release*)",
       "Bash(git tag*)",
       "Bash(git push --tags*)",
-      "Bash(gh workflow run*)"
+      "Bash(gh workflow run*)",
+      "Bash(gh stack merge*)",
+      "Bash(gh stack unstack*)",
+      "Bash(gh stack delete*)"
     ]
   }
 }
