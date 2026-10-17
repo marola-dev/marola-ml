@@ -1,5 +1,6 @@
 # One pull request for every dependency update, across the three ecosystems (a multi-ecosystem
-# group is the only key that spans update entries).
+# group is the only key that spans update entries). Each entry waits 7 days after a release before
+# proposing it, so a hijacked release pulled within a day never reaches main (marola-dev/marola#740).
 version: 2
 
 multi-ecosystem-groups:
@@ -14,6 +15,8 @@ updates:
     directory: "/"
     patterns: ["*"]
     multi-ecosystem-group: "marola-ml-deps"
+    cooldown:
+      default-days: 7
     # Bumped by hand: the tag also lives in `devkit-ref:` inputs and flake.nix.
     ignore:
       - dependency-name: "marola-dev/marola-devkit*"
@@ -22,8 +25,12 @@ updates:
     directory: "/dspy"
     patterns: ["*"]
     multi-ecosystem-group: "marola-ml-deps"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/finetune"
     patterns: ["*"]
     multi-ecosystem-group: "marola-ml-deps"
+    cooldown:
+      default-days: 7
