@@ -45,6 +45,7 @@ fine-tune (marola-sea), and the benchmark gate with its kept runs.
 | ml → app | The compiled prompts, as a PR to the app's `core/src/main/resources/` (`compile-prompt.yml`) | The files in the app |
 | ml → users | `ghcr.io/marola-dev/marola-ml:local` (`docker-local.yml`); marola-gpt on Hugging Face (`marola-gpt-publish.yml`) | Image tag; model repo |
 | ml → umbrella | `README.md` and `docs/` (`notify-umbrella.yml`); pdoc of `finetune/` and `scripts/` on the `api-docs` branch (`ci.yml`'s `api-docs` job) | Pulled by the aggregator |
+| ml → devkit | `bump-ready` when a devkit bump PR's CI ends green (`bump-ready.yml`) | Wakes the devkit's `bump-merge` |
 
 No workflow here builds the app or reads its tree. Bump `marola-image` and `resources.version`
 together: the gate fails a run whose question ids differ from the pinned question set.

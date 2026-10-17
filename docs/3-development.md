@@ -52,6 +52,7 @@ any workflow names `self-hosted`. The devkit's recipes for a runner (`just runne
 | `compile-prompt.yml` | dispatch | compile on an Ollama model inside the job, open a PR in marola-app |
 | `marola-gpt-publish.yml` | a pushed `marola-gpt-v*` tag on main (`just sea-release`); dispatch | marola-gpt: the corpus, a LoRA on Tucano-2b4 trained on a GitHub-hosted CPU, the release, the upload to `h0ffmann/marola-gpt` (a dry run by hand; no artifact kept) ([publishing](#publishing-marola-gpt)) |
 | `notify-umbrella.yml` | push to main | ask the umbrella to move its pointer, and to rebuild docs.marola.dev when `README.md` or `docs/` changed |
+| `bump-ready.yml` | `CI` completed on a `chore/devkit-v*` branch | tell the devkit the bump PR is green, so its `bump-merge` runs within minutes |
 | `pr.yml`, `labels.yml` | PR events; dispatch | the PR body from its commits; the devkit's label set |
 
 `ci.yml`'s static job clones the devkit at `v0.4.1` to run docs-lint, which static-ci has no input
@@ -62,7 +63,7 @@ for yet.
 | Secret | Used by | For |
 |---|---|---|
 | `HF_TOKEN` | `marola-gpt-publish.yml` | a fine-grained Hugging Face token with write access to the model repo (`h0ffmann/marola-gpt` for marola-gpt); not set yet |
-| `PR_BOT_KEY` (with variable `PR_BOT_APP_ID`) | `compile-prompt.yml`, `notify-umbrella.yml` | the PR in marola-app, opened as marola-pr-bot, and the umbrella dispatch (MIP-0086) |
+| `PR_BOT_KEY` (with variable `PR_BOT_APP_ID`) | `compile-prompt.yml`, `notify-umbrella.yml`, `bump-ready.yml` | the PR in marola-app, opened as marola-pr-bot, and the umbrella and devkit dispatches (MIP-0086) |
 | `GITHUB_TOKEN` | `docker-local.yml` | pushing to ghcr.io, and pulling the app image, a private package that has to grant this repo read access |
 
 A local publish uses your own `huggingface-cli login`. No key goes in the repo.
