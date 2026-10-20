@@ -20,4 +20,4 @@ openinference-instrumentation-dspy
 # was confirmed to exist at this version against dspy==3.3.1 (this file's
 # own pin above) but was not adopted — see
 # _log_compile_run_to_mlflow()'s docstring for why.
-mlflow>=3.16.1,<4
+mlflow>=3.17.0,<4
